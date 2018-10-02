@@ -1,0 +1,16 @@
+\NeedsTeXFormat{LaTeX2e}[1994/06/01]
+\ProvidesPackage{graphicscache}[2018/10/02 Graphics Cache]
+
+\RequirePackage[tightpage]{preview}
+\RequirePackage{xstring}
+
+\ExecuteOptions{}
+
+\ProcessOptions\relax
+
+\renewcommand{includegraphics}[2][]{%
+  % Calculate output file name
+  \StrSubstitute{}
+}
+
+\endinput
