@@ -9,6 +9,9 @@ useful effects:
   * Automatic JPEG compression
   * Much smaller files!
 
+Note: Due to the one-by-one invocation of `pdflatex` and `ghostscript` for
+each graphics element, the first compilation is typically slower than usual.
+
 ## Quickstart
 
 Compile the package using
