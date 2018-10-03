@@ -156,7 +156,8 @@
 %
 % \StopEventually{}
 %
-% \section{Releasing your manuscript}
+% \section{Tips \& Tricks}
+% \subsection{Releasing your manuscript}
 % \label{sec:release}
 %
 % In case you want to upload your manuscript to a journal or preprint server,
@@ -165,11 +166,18 @@
 %  \item Use |latexpand| to strip comments and flatten your tex sources into
 %        one file (optional).
 %  \item Compile the file as usual to generate the cache files.
-%  \item Compile the file again using the |render=false| option and the
-%        |-recorder| command line option.
+%  \item Compile the file again with the |-recorder| command line option.
+%        Here, we want to hide accesses of the original image files
+%        (|render=false|), but changing the package options will change the
+%        cache hash. For this purpose, |graphicspath| also reacts to a global
+%        definition of |\graphicscache@inhibit|, which has the same effect as
+%        |render=false|.
 %  \item The generated |.fls| file will contain all cache files that are needed
 %        to compile your manuscript. Package them and your |.tex| file.
 % \end{enumerate}
+%
+% This process is automated in the |release.sh| script included in the
+% distribution.
 %
 % \section{Implementation}
 %
@@ -214,6 +222,9 @@
   qfactor={0.15}
 }
 \ProcessPgfOptions{/graphicscache}\relax
+\ifdefined\graphicscache@inhibit
+  \pgfkeys{/graphicscache/render=false}%
+\fi
 %    \end{macrocode}
 %
 % \begin{macro}{\graphicscache@dorender}
