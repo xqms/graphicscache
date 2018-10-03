@@ -184,11 +184,14 @@
 \RequirePackage{pgfopts}
 \newif\ifgraphicscache@render
 \newif\ifgraphicscache@compress
+\newif\ifgraphicscache@standalone
 \graphicscache@compressfalse
 \pgfkeys{
   /graphicscache/.cd,
   render/.is if=graphicscache@render,
   render=true,
+  standalone/.is if=graphicscache@standalone,
+  standalone=false,
 %    \end{macrocode}
 %    \begin{macrocode}
   compress/.is choice,
@@ -212,7 +215,26 @@
 %    \begin{macrocode}
 \newcommand{\graphicscache@dorender}{%
   \message{Rendering \graphicscache@outputhash: \graphicscache@fname \space (master file)}%
-  \immediate\write18{pdflatex -jobname graphicscacheout -interaction nonstopmode '\string\PassOptionsToPackage{active}{preview}\string\makeatletter\string\def\string\graphicscache@figure{\graphicscache@outputhash}\string\makeatother\string\input{\jobname}' > /dev/null}%
+%   \end{macrocode}
+% First, render the graphics either using standalone or preview.
+%   \begin{macrocode}
+  \ifgraphicscache@standalone
+    \message{standalone method}
+    \StrSubstitute{\graphicscache@fname}{_}{\string\_}[\graphicscache@fname@tex]
+    \immediate\write18{pdflatex
+      -jobname graphicscacheout
+      -interaction nonstopmode
+      '\string\documentclass{standalone}\string\begin{document}\string\includegraphics[\graphicscache@args]{\graphicscache@fname@tex}\string\end{document}'
+    }%
+  \else
+    \message{preview method}
+    \immediate\write18{pdflatex
+      -jobname graphicscacheout
+      -interaction nonstopmode
+      '\string\PassOptionsToPackage{active}{preview}\string\makeatletter\string\def\string\graphicscache@figure{\graphicscache@outputhash}\string\makeatother\string\input{\jobname}'
+      > /dev/null
+    }%
+  \fi
   \immediate\write18{mkdir -p graphicscache}%
 %    \end{macrocode}
 % Now it gets complicated!
