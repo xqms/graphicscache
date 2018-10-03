@@ -114,6 +114,11 @@
 % \textbf{Note:} The first compilation process might take a while, since the
 % cached PDFs are generated one-by-one.
 %
+% \textbf{Note:} |graphicscache| uses the |preview| package internally. If you
+% use |preview| yourself, this will lead to problems. In these cases, we
+% recommend to condition your |\PreviewXYZ| calls on an external parameter,
+% which is disabled per default.
+%
 % \subsection{Generated files}
 %
 % |graphicscache| will create a folder called |graphicscache| in the compilation
