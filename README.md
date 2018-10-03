@@ -6,8 +6,8 @@ useful effects:
 * Recompilations are much faster (10x speedup observed)
 * Images can be postprocessed with `ghostscript` before inclusion, thus:
   * Automatic downscaling to specified DPI
-  * Automatic JPEG compression
-  * Much smaller files!
+  * Automatic JPEG compression with configurable quality
+  * Much smaller files (e.g. 10MB instead of 150MB)!
 
 Note: Due to the one-by-one invocation of `pdflatex` and `ghostscript` for
 each graphics element, the first compilation is typically slower than usual.
