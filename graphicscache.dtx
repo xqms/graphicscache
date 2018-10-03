@@ -136,6 +136,11 @@
 % Controls the image resolution in dots per inch. The default value is 300.
 % This option only takes effect if |compress| is not |false|.
 %
+% \DescribeKey{qfactor}'='<number>
+% This controls the quality parameter of the JPEG encoder (see |compress|).
+% Smaller values give higher quality. The default value is 0.15, which
+% corresponds to the ``Maximum'' setting mentioned by Adobe.
+%
 % \DescribeKey{render}'=true|false'
 % Controls whether rendering is allowed. The default is |true|. If |false|,
 % |graphicscache| is not allowed to create new cache files. Instead, it will
