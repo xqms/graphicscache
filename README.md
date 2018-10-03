@@ -12,6 +12,9 @@ useful effects:
 Note: Due to the one-by-one invocation of `pdflatex` and `ghostscript` for
 each graphics element, the first compilation is typically slower than usual.
 
+Note: graphicscache needs the `\write18` call (also called shell escape). This
+is a security risk if you have untrusted TeX sources.
+
 ## Quickstart
 
 Compile the package using
@@ -31,7 +34,12 @@ Activate caching with
 
     \usepackage{graphicscache}
 
-and you are finished!
+and you are finished. Remember to compile your document with `-shell-escape`,
+like
+
+    pdflatex -shell-escape paper.tex
+
+Most LaTeX editors allow you to enable shell escape in their settings.
 
 ## Releasing
 
