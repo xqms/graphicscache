@@ -1,16 +1,122 @@
 \NeedsTeXFormat{LaTeX2e}[1994/06/01]
 \ProvidesPackage{graphicscache}[2018/10/02 Graphics Cache]
 
+\RequirePackage{graphicx}
 \RequirePackage[tightpage]{preview}
 \RequirePackage{xstring}
+\RequirePackage{filemod}
+\RequirePackage{letltxmacro}
+\RequirePackage{preview}
+\RequirePackage{pgfopts}
 
-\ExecuteOptions{}
+\newif\ifgraphicscache@render
+\newif\ifgraphicscache@compress
 
-\ProcessOptions\relax
+\graphicscache@compressfalse
 
-\renewcommand{includegraphics}[2][]{%
-  % Calculate output file name
-  \StrSubstitute{}
+\pgfkeys{
+  /graphicscache/.cd,
+  render/.is if=graphicscache@render,
+  render=true,
+%
+  compress/.is choice,
+  compress/false/.code={\graphicscache@compressfalse},
+  compress/jpeg/.code={\graphicscache@compresstrue \def\graphicscache@compress@mode{DCTEncode}},
+  compress/flat/.code={\graphicscache@compresstrue \def\graphicscache@compress@mode{FlatEncode}},
+  compress=jpeg,
+%
+  dpi/.store in=\graphicscache@dpi,
+  dpi=300,
+%
+  qfactor/.store in=\graphicscache@qfactor,
+  qfactor={0.15}
+}
+
+\ProcessPgfOptions{/graphicscache}\relax
+
+\newcommand{\graphicscache@dorender}{%
+  \message{Rendering \graphicscache@outputhash: \graphicscache@fname \space (master file)}%
+  \immediate\write18{pdflatex -jobname graphicscache -interaction nonstopmode '\string\PassOptionsToPackage{active}{preview}\string\makeatletter\string\def\string\graphicscache@figure{\graphicscache@outputhash}\string\makeatother\string\input{\jobname}' > /dev/null}%
+  \immediate\write18{mkdir -p graphicscache}%
+  %
+  % Now it gets complicated!
+  \ifgraphicscache@compress
+    \message{With compression}
+    \immediate\write18{gs
+      -sOutputFile=\graphicscache@output\space
+      -sDEVICE=pdfwrite
+      -dCompatibilityLevel=1.4
+      -dPDFSETTINGS=/prepress
+      -dNOPAUSE -dQUIET -dBATCH
+      -c '.setpdfwrite <<
+        /AutoFilterColorImages false
+        /EncodeColorImages true
+        /ColorImageFilter /\graphicscache@compress@mode\space
+        /ColorImageDict << /ColorTransform 1 /QFactor \graphicscache@qfactor\space /Blend 1 /HSamples [1 1 1 1] /VSamples [1 1 1 1] >>
+        /ColorImageResolution \graphicscache@dpi\space
+        /AutoFilterGrayImages false
+        /EncodeGrayImages true
+        /GrayImageFilter /\graphicscache@compress@mode\space
+        /GrayImageDict << /ColorTransform 1 /QFactor \graphicscache@qfactor\space /Blend 1 /HSamples [1 1 1 1] /VSamples [1 1 1 1] >>
+        /GrayImageResolution \graphicscache@dpi\space
+      >> setdistillerparams'
+      -f graphicscache.pdf%
+    }%
+  \else
+    \message{Direct}
+    \immediate\write18{
+      cp graphicscache.pdf \graphicscache@output
+    }%
+  \fi
+}
+
+% save original \includegraphics
+\LetLtxMacro\graphicscache@includegraphics\includegraphics
+
+\renewcommand{\includegraphics}[2][]{%
+  \begingroup
+  \expandarg
+  % Hash everything!
+  \edef\graphicscache@options{\@nameuse{opt@graphicscache.sty}}%
+  \edef\graphicscache@args{\detokenize{#1}}%
+  \edef\graphicscache@fname{\detokenize{#2}}%
+  \edef\graphicscache@outputhash{\pdfmdfivesum{\graphicscache@options\graphicscache@args\graphicscache@fname}}%
+  \edef\graphicscache@output{./graphicscache/\graphicscache@outputhash.pdf}%
+  \ifPreview
+    % Render it!
+    \ifnum\pdf@strcmp{\graphicscache@outputhash}{\graphicscache@figure}=0 %
+      \message{Rendering \graphicscache@outputhash \space (preview file)}%
+      \setlength{\PreviewBorder}{0pt}%
+      \begin{preview}%
+        \graphicscache@includegraphics[#1]{#2}%
+      \end{preview}%
+    \fi
+  \else
+    \ifgraphicscache@render
+      % Check if output file exists and is newer than input
+      \filemodcmp{#2}{\graphicscache@output}{% input is newer
+        \graphicscache@dorender%
+      }{% Output is newer
+        \message{Already have \graphicscache@outputhash: \graphicscache@fname}%
+      }%
+      % If it still does not exist, we are likely in a strange environment
+      % (e.g. tabu). In that case, fall back to original includegraphics.
+      \filemodcmp{#2}{\graphicscache@output}{% input is newer/output does not exist
+        \graphicscache@includegraphics[#1]{#2}%
+      }{% otherwise, use the generated file!
+        \graphicscache@includegraphics{\graphicscache@output}%
+      }%
+    \else
+      % Here, we just look if the output file exists. If not, fall back to
+      % original includegraphics.
+      \IfFileExists{\graphicscache@output}{%
+        \graphicscache@includegraphics{\graphicscache@output}%
+      }{%
+        \graphicscache@includegraphics[#1]{#2}%
+      }%
+    \fi
+  \fi
+  \endgroup
 }
 
 \endinput
