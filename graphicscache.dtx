@@ -156,14 +156,16 @@
 % \subsection{Macros}
 %
 % \DescribeMacro{\includegraphics}[args]{path}
-% This behaves exactly like the original |graphicx| |\includegraphics|. |args|
-% are forwarded to |graphicx|.
+% This behaves exactly like the original |graphicx| |\includegraphics|.
+% However, only a limited number of keys in |args| is supported at the moment:
+% |width|, |height|, |trim|, |clip|, |angle|, |origin|, |keepaspectratio|,
+% |scale|. In addition, you can specify any of the package options above
+% here as well. For example, you might want to disable compression for
+% a particular image with
 %
-% \DescribeMacro{\includegraphicscache}[args]{graphicscache args}{path}
-% This macro allows the user to change |graphicscache| settings using the
-% |graphicscache args| argument. For example, you might want to disable
-% compression for a particular image with
-% |\includegraphics[...]{compress=false}{...}|.
+% \begin{example}
+%   |\includegraphics[width=...,compress=false]{...}|.
+% \end{example}
 %
 % \StopEventually{}
 %
@@ -209,7 +211,15 @@
 \newif\ifgraphicscache@render
 \newif\ifgraphicscache@compress
 \newif\ifgraphicscache@standalone
-\graphicscache@compressfalse
+\def\graphicscache@graphicsargs{}
+\newlength\graphicscache@tmplen
+\newcommand{\graphicscache@addarg}[1]{
+  \ifx\graphicscache@graphicsargs\empty
+    \edef\graphicscache@graphicsargs{#1}%
+  \else
+    \edef\graphicscache@graphicsargs{\graphicscache@graphicsargs,#1}%
+  \fi
+}
 \pgfkeys{
   /graphicscache/.cd,
   render/.is if=graphicscache@render,
@@ -230,7 +240,30 @@
 %    \end{macrocode}
 %    \begin{macrocode}
   qfactor/.store in=\graphicscache@qfactor,
-  qfactor={0.15}
+  qfactor={0.15},
+%    \end{macrocode}
+% We now define the list of supported graphicx arguments:
+%    \begin{macrocode}
+  width/.code={%
+    \setlength\graphicscache@tmplen{#1}%
+    \graphicscache@addarg{width=\the\graphicscache@tmplen}%
+  },
+  height/.code={%
+    \setlength\graphicscache@tmplen{#1}%
+    \graphicscache@addarg{height=\the\graphicscache@tmplen}%
+  },
+  trim/.code={\graphicscache@addarg{trim=#1}},
+  clip/.code={\graphicscache@addarg{clip}},
+  angle/.code={
+    \edef\graphicscache@tmp{#1}%
+    \graphicscache@addarg{angle=\graphicscache@tmp}%
+  },
+  origin/.code={\graphicscache@addarg{origin=#1}},
+  keepaspectratio/.code={\graphicscache@addarg{keepaspectratio}},
+  scale/.code={
+    \edef\graphicscache@tmp{#1}%
+    \graphicscache@addarg{scale=\graphicscache@tmp}%
+  },
 }
 \ProcessPgfOptions{/graphicscache}\relax
 \ifdefined\graphicscache@inhibit
@@ -241,7 +274,7 @@
 % \begin{macro}{\graphicscache@dorender}
 %    \begin{macrocode}
 \newcommand{\graphicscache@dorender}{%
-  \message{Rendering \graphicscache@outputhash: \graphicscache@fname \space (master file)}%
+  \message{Rendering \graphicscache@outputhash: \graphicscache@fname\space with args: \graphicscache@graphicsargs\space (master file)}%
 %   \end{macrocode}
 % First, render the graphics either using standalone or preview.
 %   \begin{macrocode}
@@ -301,20 +334,23 @@
 % save original |\includegraphics|
 %    \begin{macrocode}
 \LetLtxMacro\graphicscache@includegraphics\includegraphics
+\newcommand\graphicscache@native{%
+  \expandafter\graphicscache@includegraphics\expandafter[\graphicscache@graphicsargs]{\graphicscache@fname}%
+}
 %    \end{macrocode}
 %
 % \begin{macro}{\graphicscache@work}
 %    \begin{macrocode}
-\newcommand{\graphicscache@work}[2]{%
+\newcommand{\graphicscache@work}{%
   \ifPreview
 %    \end{macrocode}
 % Render it!
 %    \begin{macrocode}
     \ifnum\pdf@strcmp{\graphicscache@outputhash}{\graphicscache@figure}=0 %
-      \message{Rendering \graphicscache@outputhash \space (preview file)}%
+      \message{Rendering \graphicscache@outputhash\space with args \graphicscache@graphicsargs\space (preview file)}%
       \setlength{\PreviewBorder}{0pt}%
       \begin{preview}%
-        \graphicscache@includegraphics[#1]{#2}%
+        \graphicscache@native
       \end{preview}%
     \fi
   \else
@@ -322,7 +358,7 @@
 %    \end{macrocode}
 % Check if output file exists and is newer than input
 %    \begin{macrocode}
-      \filemodcmp{#2}{\graphicscache@output}{% input is newer
+      \filemodcmp{\graphicscache@fname}{\graphicscache@output}{% input is newer
         \graphicscache@dorender%
       }{% Output is newer
         \message{Already have \graphicscache@outputhash: \graphicscache@fname}%
@@ -331,8 +367,8 @@
 % If it still does not exist, we are likely in a strange environment
 % (e.g. tabu). In that case, fall back to original includegraphics.
 %    \begin{macrocode}
-      \filemodcmp{#2}{\graphicscache@output}{% input is newer/output does not exist
-        \graphicscache@includegraphics[#1]{#2}%
+      \filemodcmp{\graphicscache@fname}{\graphicscache@output}{% input is newer/output does not exist
+        \graphicscache@native
       }{% otherwise, use the generated file!
         \graphicscache@includegraphics{\graphicscache@output}%
       }%
@@ -344,7 +380,7 @@
       \IfFileExists{\graphicscache@output}{%
         \graphicscache@includegraphics{\graphicscache@output}%
       }{%
-        \graphicscache@includegraphics[#1]{#2}%
+        \graphicscache@native
       }%
     \fi
   \fi
@@ -360,11 +396,11 @@
 % Hash everything!
 %    \begin{macrocode}
   \edef\graphicscache@options{\@nameuse{opt@graphicscache.sty}}%
-  \edef\graphicscache@args{\detokenize{#1}}%
-  \edef\graphicscache@fname{\detokenize{#2}}%
-  \edef\graphicscache@outputhash{\pdfmdfivesum{\graphicscache@options\graphicscache@args\graphicscache@fname}}%
+  \pgfkeys{/graphicscache/.cd,#1}%
+  \edef\graphicscache@fname{#2}%
+  \edef\graphicscache@outputhash{\pdfmdfivesum{\graphicscache@options\graphicscache@graphicsargs\graphicscache@fname}}%
   \edef\graphicscache@output{./graphicscache/\graphicscache@outputhash.pdf}%
-  \graphicscache@work{#1}{#2}%
+  \graphicscache@work
   \endgroup
 }
 %    \end{macrocode}
@@ -374,13 +410,8 @@
 \newcommand{\includegraphicscache}[3][]{%
   \begingroup
   \expandarg
-  \edef\graphicscache@options{\@nameuse{opt@graphicscache.sty}x#2}%
-  \edef\graphicscache@args{\detokenize{#1}}%
-  \edef\graphicscache@fname{\detokenize{#3}}%
-  \edef\graphicscache@outputhash{\pdfmdfivesum{\graphicscache@options\graphicscache@args\graphicscache@fname}}%
-  \edef\graphicscache@output{./graphicscache/\graphicscache@outputhash.pdf}%
   \pgfkeys{/graphicscache/.cd,#2}%
-  \graphicscache@work{#1}{#3}%
+  \includegraphics[#1]{#3}%
   \endgroup
 }
 %    \end{macrocode}
