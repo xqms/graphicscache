@@ -292,7 +292,7 @@
       -jobname graphicscacheout
       -interaction nonstopmode
       '\string\PassOptionsToPackage{active}{preview}\string\makeatletter\string\def\string\graphicscache@figure{\graphicscache@outputhash}\string\makeatother\string\input{\jobname}'
-      > /dev/null
+      > /dev/null || rm graphicscacheout.pdf
     }%
   \fi
   \immediate\write18{mkdir -p graphicscache}%
@@ -319,7 +319,7 @@
         /GrayImageDict << /ColorTransform 1 /QFactor \graphicscache@qfactor\space /Blend 1 /HSamples [1 1 1 1] /VSamples [1 1 1 1] >>
         /GrayImageResolution \graphicscache@dpi\space
       >> setdistillerparams'
-      -f graphicscacheout.pdf%
+      -f graphicscacheout.pdf || rm \graphicscache@output
     }%
   \else
     \message{Direct}
