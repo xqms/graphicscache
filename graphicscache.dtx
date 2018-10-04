@@ -159,6 +159,12 @@
 % This behaves exactly like the original |graphicx| |\includegraphics|. |args|
 % are forwarded to |graphicx|.
 %
+% \DescribeMacro{\includegraphicscache}[args]{graphicscache args}{path}
+% This macro allows the user to change |graphicscache| settings using the
+% |graphicscache args| argument. For example, you might want to disable
+% compression for a particular image with
+% |\includegraphics[...]{compress=false}{...}|.
+%
 % \StopEventually{}
 %
 % \section{Tips \& Tricks}
@@ -261,7 +267,7 @@
 % Now it gets complicated!
 %    \begin{macrocode}
   \ifgraphicscache@compress
-    \message{With compression}
+    \message{With compression: \graphicscache@compress@mode}
     \immediate\write18{gs
       -sOutputFile=\graphicscache@output\space
       -sDEVICE=pdfwrite
@@ -297,19 +303,9 @@
 \LetLtxMacro\graphicscache@includegraphics\includegraphics
 %    \end{macrocode}
 %
-% \begin{macro}{\includegraphics}
+% \begin{macro}{\graphicscache@work}
 %    \begin{macrocode}
-\renewcommand{\includegraphics}[2][]{%
-  \begingroup
-  \expandarg
-%    \end{macrocode}
-% Hash everything!
-%    \begin{macrocode}
-  \edef\graphicscache@options{\@nameuse{opt@graphicscache.sty}}%
-  \edef\graphicscache@args{\detokenize{#1}}%
-  \edef\graphicscache@fname{\detokenize{#2}}%
-  \edef\graphicscache@outputhash{\pdfmdfivesum{\graphicscache@options\graphicscache@args\graphicscache@fname}}%
-  \edef\graphicscache@output{./graphicscache/\graphicscache@outputhash.pdf}%
+\newcommand{\graphicscache@work}[2]{%
   \ifPreview
 %    \end{macrocode}
 % Render it!
@@ -352,6 +348,39 @@
       }%
     \fi
   \fi
+}
+%    \end{macrocode}
+%  \end{macro}
+%  \begin{macro}{\includegraphics}
+%    \begin{macrocode}
+\renewcommand{\includegraphics}[2][]{%
+  \begingroup
+  \expandarg
+%    \end{macrocode}
+% Hash everything!
+%    \begin{macrocode}
+  \edef\graphicscache@options{\@nameuse{opt@graphicscache.sty}}%
+  \edef\graphicscache@args{\detokenize{#1}}%
+  \edef\graphicscache@fname{\detokenize{#2}}%
+  \edef\graphicscache@outputhash{\pdfmdfivesum{\graphicscache@options\graphicscache@args\graphicscache@fname}}%
+  \edef\graphicscache@output{./graphicscache/\graphicscache@outputhash.pdf}%
+  \graphicscache@work{#1}{#2}%
+  \endgroup
+}
+%    \end{macrocode}
+%  \end{macro}
+%  \begin{macro}{\includegraphicscache}
+%    \begin{macrocode}
+\newcommand{\includegraphicscache}[3][]{%
+  \begingroup
+  \expandarg
+  \edef\graphicscache@options{\@nameuse{opt@graphicscache.sty}x#2}%
+  \edef\graphicscache@args{\detokenize{#1}}%
+  \edef\graphicscache@fname{\detokenize{#3}}%
+  \edef\graphicscache@outputhash{\pdfmdfivesum{\graphicscache@options\graphicscache@args\graphicscache@fname}}%
+  \edef\graphicscache@output{./graphicscache/\graphicscache@outputhash.pdf}%
+  \pgfkeys{/graphicscache/.cd,#2}%
+  \graphicscache@work{#1}{#3}%
   \endgroup
 }
 %    \end{macrocode}
