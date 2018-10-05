@@ -387,6 +387,39 @@
 }
 %    \end{macrocode}
 %  \end{macro}
+%  \begin{macro}{\graphicscache@getfname}
+%    \begin{macrocode}
+\catcode`\*=11
+\newif\ifgraphicscache@exists
+\newcommand{\graphicscache@getfname}[1]{
+  \begingroup
+  \global\graphicscache@existstrue
+  \let\input@path\Ginput@path
+  \filename@parse{#1}%
+  \ifx\filename@ext\relax
+    \@for\Gin@temp:=\Gin@extensions\do{%
+      \ifx\Gin@ext\relax
+        \Gin@getbase\Gin@temp
+      \fi}%
+  \else
+    \Gin@getbase{\Gin@sepdefault\filename@ext}%
+  \fi
+  \ifx\Gin@ext\relax
+    \global\graphicscache@existsfalse
+  \else
+    \@ifundefined{Gin@rule@\Gin@ext}%
+      {\global\graphicscache@existsfalse}%
+      {}%
+    \fi
+  \ifgraphicscache@exists
+    \xdef\graphicscache@fname{\Gin@base\Gin@ext}%
+    \message{Resolved #1 to \graphicscache@fname}%
+  \fi
+  \endgroup
+}
+\catcode`\*=12
+%    \end{macrocode}
+%  \end{macro}
 %  \begin{macro}{\includegraphics}
 %    \begin{macrocode}
 \renewcommand{\includegraphics}[2][]{%
@@ -397,10 +430,14 @@
 %    \begin{macrocode}
   \edef\graphicscache@options{\@nameuse{opt@graphicscache.sty}}%
   \pgfkeys{/graphicscache/.cd,#1}%
-  \edef\graphicscache@fname{#2}%
-  \edef\graphicscache@outputhash{\pdfmdfivesum{\graphicscache@options\graphicscache@graphicsargs\graphicscache@fname}}%
-  \edef\graphicscache@output{./graphicscache/\graphicscache@outputhash.pdf}%
-  \graphicscache@work
+  \graphicscache@getfname{#2}%
+  \ifgraphicscache@exists
+    \edef\graphicscache@outputhash{\pdfmdfivesum{\graphicscache@options\graphicscache@graphicsargs\graphicscache@fname}}%
+    \edef\graphicscache@output{./graphicscache/\graphicscache@outputhash.pdf}%
+    \graphicscache@work
+  \else
+    \PackageError{graphicscache}{Could not find file #2}{}%
+  \fi
   \endgroup
 }
 %    \end{macrocode}
