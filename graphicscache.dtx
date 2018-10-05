@@ -391,7 +391,7 @@
 %    \begin{macrocode}
 \catcode`\*=11
 \newif\ifgraphicscache@exists
-\newcommand{\graphicscache@getfname}[1]{
+\newcommand{\graphicscache@getfname}[1]{%
   \begingroup
   \global\graphicscache@existstrue
   \let\input@path\Ginput@path
