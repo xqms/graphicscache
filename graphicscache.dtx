@@ -216,7 +216,7 @@
 \newif\ifgraphicscache@preview
 \def\graphicscache@graphicsargs{}
 \newlength\graphicscache@tmplen
-\newcommand{\graphicscache@addarg}[1]{
+\newcommand{\graphicscache@addarg}[1]{%
   \ifx\graphicscache@graphicsargs\empty
     \edef\graphicscache@graphicsargs{#1}%
   \else
@@ -257,13 +257,13 @@
   },
   trim/.code={\graphicscache@addarg{trim=#1}},
   clip/.code={\graphicscache@addarg{clip}},
-  angle/.code={
+  angle/.code={%
     \edef\graphicscache@tmp{#1}%
     \graphicscache@addarg{angle=\graphicscache@tmp}%
   },
   origin/.code={\graphicscache@addarg{origin=#1}},
   keepaspectratio/.code={\graphicscache@addarg{keepaspectratio}},
-  scale/.code={
+  scale/.code={%
     \edef\graphicscache@tmp{#1}%
     \graphicscache@addarg{scale=\graphicscache@tmp}%
   },
@@ -340,7 +340,7 @@
 %
 % save original |\includegraphics|
 %    \begin{macrocode}
-\LetLtxMacro\graphicscache@includegraphics\includegraphics
+\LetLtxMacro\graphicscache@includegraphics\includegraphics%
 \newcommand\graphicscache@native{%
   \expandafter\graphicscache@includegraphics\expandafter[\graphicscache@graphicsargs]{\graphicscache@fname}%
 }
