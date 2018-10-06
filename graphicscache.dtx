@@ -25,7 +25,7 @@
 %<*driver>
 \documentclass[a4paper,11pt]{ydoc}
 \usepackage{ydoc-expl}
-\usepackage{graphicscache}
+% \usepackage{graphicscache}
 \usepackage[capitalize]{cleveref}
 \EnableCrossrefs
 \CodelineIndex
@@ -38,7 +38,7 @@
 %</driver>
 % \fi
 %
-% \CheckSum{136}
+% \CheckSum{0}
 %
 % \CharacterTable
 %  {Upper-case    \A\B\C\D\E\F\G\H\I\J\K\L\M\N\O\P\Q\R\S\T\U\V\W\X\Y\Z
@@ -276,6 +276,8 @@
 %    \end{macrocode}
 %
 % \begin{macro}{\graphicscache@dorender}
+%    Here, we actually perform the rendering---either in standalone or preview
+%    mode. Sadly, this is quite complex due to cross-platform support.
 %    \begin{macrocode}
 \newcommand{\graphicscache@dorender}{%
   \message{Rendering \graphicscache@outputhash: \graphicscache@fname\space with args: \graphicscache@graphicsargs\space (master file)}%
@@ -284,9 +286,9 @@
   \else
     \immediate\write18{mkdir -p graphicscache}%
   \fi
-%   \end{macrocode}
+%    \end{macrocode}
 % First, render the graphics either using preview or standalone.
-%   \begin{macrocode}
+%    \begin{macrocode}
   \ifgraphicscache@preview
     \message{preview method}%
     \ifwindows
@@ -339,7 +341,8 @@
     \fi
   \fi
 %    \end{macrocode}
-% Now it gets complicated!
+% Now, call ghostscript for compression---if required, otherwise just copy the
+% file.
 %    \begin{macrocode}
   \ifgraphicscache@compress
     \message{With compression: \graphicscache@compress@mode}%
@@ -411,6 +414,8 @@
 %    \end{macrocode}
 %
 % \begin{macro}{\graphicscache@work}
+%    This macro performs the update check: Do we need to render the file again
+%    or can we just include the cached version?
 %    \begin{macrocode}
 \newcommand{\graphicscache@work}{%
   \ifPreview
@@ -460,6 +465,8 @@
 %    \end{macrocode}
 %  \end{macro}
 %  \begin{macro}{\graphicscache@getfname}
+%    This macro resolves base names (i.e. includegraphics arguments with or
+%    without extensions) to relative paths.
 %    \begin{macrocode}
 \catcode`\*=11
 \newif\ifgraphicscache@exists
@@ -493,6 +500,7 @@
 %    \end{macrocode}
 %  \end{macro}
 %  \begin{macro}{\includegraphics}
+%    Main entry point.
 %    \begin{macrocode}
 \renewcommand{\includegraphics}[2][]{%
   \begingroup
@@ -505,7 +513,7 @@
 %    \end{macrocode}
 % If we are rendering, we need the actual filename, so that we can check
 % modification times. Otherwise, just assume the file exists, |\includegraphics|
-% will throw an error otherwise.
+% will throw an error itself otherwise.
 %    \begin{macrocode}
   \ifgraphicscache@render
     \graphicscache@getfname{#2}%
