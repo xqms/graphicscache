@@ -45,7 +45,8 @@ Most LaTeX editors allow you to enable shell escape in their settings.
 
 Another feature is creating a "release" tarball containing your TeX sources
 and the downscaled images. Just use the `release.sh` shell script in your source
-directory.
+directory. In this case it is recommended to place the `graphicscache.sty` file
+in your source tree, since your release target will probably not have it.
 
 ## Documentation
 
