@@ -114,11 +114,6 @@
 % \textbf{Note:} The first compilation process might take a while, since the
 % cached PDFs are generated one-by-one.
 %
-% \textbf{Note:} |graphicscache| uses the |preview| package internally. If you
-% use |preview| yourself, this will lead to problems. In these cases, we
-% recommend to condition your |\PreviewXYZ| calls on an external parameter,
-% which is disabled per default.
-%
 % \subsection{Generated files}
 %
 % |graphicscache| will create a folder called |graphicscache| in the compilation
@@ -152,6 +147,14 @@
 % attempt to use the appropriate cache file. If it does not exist,
 % |graphicscache| will fall back to |graphicx| in-place rendering.
 % This can be used to perform a final release (see \cref{sec:release}).
+%
+% \DescribeKey{preview}'=true|false'
+% If |preview| is |true|, |graphicscache| will render the entire document
+% and confine the output to the current graphics element using the |preview|
+% package. If |false|, it will generate on-the-fly documents containing just the
+% image with documentclass |standalone|. The latter will always be quicker,
+% so |preview=false| is the default. In case you notice strange problems, try
+% |preview=true|.
 %
 % \subsection{Macros}
 %
@@ -210,7 +213,7 @@
 \RequirePackage{pgfopts}
 \newif\ifgraphicscache@render
 \newif\ifgraphicscache@compress
-\newif\ifgraphicscache@standalone
+\newif\ifgraphicscache@preview
 \def\graphicscache@graphicsargs{}
 \newlength\graphicscache@tmplen
 \newcommand{\graphicscache@addarg}[1]{
@@ -224,8 +227,8 @@
   /graphicscache/.cd,
   render/.is if=graphicscache@render,
   render=true,
-  standalone/.is if=graphicscache@standalone,
-  standalone=false,
+  preview/.is if=graphicscache@preview,
+  preview=false,
 %    \end{macrocode}
 %    \begin{macrocode}
   compress/.is choice,
@@ -276,23 +279,25 @@
 \newcommand{\graphicscache@dorender}{%
   \message{Rendering \graphicscache@outputhash: \graphicscache@fname\space with args: \graphicscache@graphicsargs\space (master file)}%
 %   \end{macrocode}
-% First, render the graphics either using standalone or preview.
+% First, render the graphics either using preview or standalone.
 %   \begin{macrocode}
-  \ifgraphicscache@standalone
-    \message{standalone method}
-    \StrSubstitute{\graphicscache@fname}{_}{\string\_}[\graphicscache@fname@tex]
-    \immediate\write18{pdflatex
-      -jobname graphicscacheout
-      -interaction nonstopmode
-      '\string\documentclass{standalone}\string\begin{document}\string\includegraphics[\graphicscache@args]{\graphicscache@fname@tex}\string\end{document}'
-    }%
-  \else
-    \message{preview method}
+  \ifgraphicscache@preview
+    \message{preview method}%
     \immediate\write18{pdflatex
       -jobname graphicscacheout
       -interaction nonstopmode
       '\string\PassOptionsToPackage{active}{preview}\string\makeatletter\string\def\string\graphicscache@figure{\graphicscache@outputhash}\string\makeatother\string\input{\jobname}'
       > /dev/null || rm graphicscacheout.pdf
+    }%
+  \else
+    \message{standalone method}%
+    \immediate\write18{pdflatex
+      -jobname graphicscacheout
+      -interaction nonstopmode
+      '\string\documentclass{standalone}
+       \string\usepackage{graphicx}
+       \string\begin{document}\string\includegraphics[\graphicscache@graphicsargs]{\graphicscache@fname}\string\end{document}'
+      || rm graphicscacheout.pdf
     }%
   \fi
   \immediate\write18{mkdir -p graphicscache}%
