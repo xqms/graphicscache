@@ -211,6 +211,7 @@
 \RequirePackage{letltxmacro}
 \RequirePackage{preview}
 \RequirePackage{pgfopts}
+\RequirePackage{ifplatform}
 \newif\ifgraphicscache@render
 \newif\ifgraphicscache@compress
 \newif\ifgraphicscache@preview
@@ -278,61 +279,124 @@
 %    \begin{macrocode}
 \newcommand{\graphicscache@dorender}{%
   \message{Rendering \graphicscache@outputhash: \graphicscache@fname\space with args: \graphicscache@graphicsargs\space (master file)}%
-  \immediate\write18{mkdir -p graphicscache}%
+  \ifwindows
+    \immediate\write18{md graphicscache 2>NUL}%
+  \else
+    \immediate\write18{mkdir -p graphicscache}%
+  \fi
 %   \end{macrocode}
 % First, render the graphics either using preview or standalone.
 %   \begin{macrocode}
   \ifgraphicscache@preview
     \message{preview method}%
-    \immediate\write18{pdflatex
-      -jobname graphicscacheout
-      -interaction nonstopmode
-      -output-directory graphicscache
-      '\string\PassOptionsToPackage{active}{preview}\string\makeatletter\string\def\string\graphicscache@figure{\graphicscache@outputhash}\string\makeatother\string\input{\jobname}'
-      > /dev/null || rm graphicscache/graphicscacheout.pdf
-    }%
+    \ifwindows
+      \immediate\write18{del /q graphicscache/graphicscacheout.pdf}
+      \immediate\write18{pdflatex
+        -jobname graphicscacheout
+        -interaction nonstopmode
+        -output-directory graphicscache
+        "\string\PassOptionsToPackage{active}{preview}\string\makeatletter\string\def\string\graphicscache@figure{\graphicscache@outputhash}\string\makeatother\string\input{\jobname}"
+      }%
+      \IfFileExists{graphicscache/graphicscacheout.pdf}{}{%
+        \PackageError{graphicscache}{External pdflatex call failed (see above)}{}%
+        \def\graphicscache@output{}%
+      }
+    \else
+      \immediate\write18{pdflatex
+        -jobname graphicscacheout
+        -interaction nonstopmode
+        -output-directory graphicscache
+        '\string\PassOptionsToPackage{active}{preview}\string\makeatletter\string\def\string\graphicscache@figure{\graphicscache@outputhash}\string\makeatother\string\input{\jobname}'
+        > /dev/null || rm graphicscache/graphicscacheout.pdf
+      }%
+    \fi
   \else
     \message{standalone method}%
-    \immediate\write18{pdflatex
-      -jobname graphicscacheout
-      -interaction nonstopmode
-      -output-directory graphicscache
-      '\string\documentclass{standalone}
-       \string\usepackage{graphicx}
-       \string\begin{document}\string\includegraphics[\graphicscache@graphicsargs]{\graphicscache@fname}\string\end{document}'
-      > /dev/null || rm graphicscache/graphicscacheout.pdf
-    }%
+    \ifwindows
+      \immediate\write18{del /q graphicscache\string\graphicscacheout.pdf}
+      \immediate\write18{pdflatex
+        -jobname graphicscacheout
+        -interaction nonstopmode
+        -output-directory graphicscache
+        "\string\documentclass{standalone}
+        \string\usepackage{graphicx}
+        \string\begin{document}\string\includegraphics[\graphicscache@graphicsargs]{\graphicscache@fname}\string\end{document}"
+      }%
+      \IfFileExists{graphicscache/graphicscacheout.pdf}{}{%
+        \PackageError{graphicscache}{External pdflatex call failed (see above)}{}%
+        \def\graphicscache@output{}%
+      }
+    \else
+      \immediate\write18{pdflatex
+        -jobname graphicscacheout
+        -interaction nonstopmode
+        -output-directory graphicscache
+        '\string\documentclass{standalone}
+        \string\usepackage{graphicx}
+        \string\begin{document}\string\includegraphics[\graphicscache@graphicsargs]{\graphicscache@fname}\string\end{document}'
+        > /dev/null || rm graphicscache/graphicscacheout.pdf
+      }%
+    \fi
   \fi
 %    \end{macrocode}
 % Now it gets complicated!
 %    \begin{macrocode}
   \ifgraphicscache@compress
     \message{With compression: \graphicscache@compress@mode}%
-    \immediate\write18{gs
-      -sOutputFile=\graphicscache@output\space
-      -sDEVICE=pdfwrite
-      -dCompatibilityLevel=1.4
-      -dPDFSETTINGS=/prepress
-      -dNOPAUSE -dQUIET -dBATCH
-      -c '.setpdfwrite <<
-        /AutoFilterColorImages false
-        /EncodeColorImages true
-        /ColorImageFilter /\graphicscache@compress@mode\space
-        /ColorImageDict << /ColorTransform 1 /QFactor \graphicscache@qfactor\space /Blend 1 /HSamples [1 1 1 1] /VSamples [1 1 1 1] >>
-        /ColorImageResolution \graphicscache@dpi\space
-        /AutoFilterGrayImages false
-        /EncodeGrayImages true
-        /GrayImageFilter /\graphicscache@compress@mode\space
-        /GrayImageDict << /ColorTransform 1 /QFactor \graphicscache@qfactor\space /Blend 1 /HSamples [1 1 1 1] /VSamples [1 1 1 1] >>
-        /GrayImageResolution \graphicscache@dpi\space
-      >> setdistillerparams'
-      -f graphicscache/graphicscacheout.pdf || rm \graphicscache@output
-    }%
+    \ifwindows
+      \immediate\write18{mgs
+        -sOutputFile=\graphicscache@output\space
+        -sDEVICE=pdfwrite
+        -dCompatibilityLevel=1.4
+        -dPDFSETTINGS=/prepress
+        -dNOPAUSE -dQUIET -dBATCH
+        -c ".setpdfwrite <<
+          /AutoFilterColorImages false
+          /EncodeColorImages true
+          /ColorImageFilter /\graphicscache@compress@mode\space
+          /ColorImageDict << /ColorTransform 1 /QFactor \graphicscache@qfactor\space /Blend 1 /HSamples [1 1 1 1] /VSamples [1 1 1 1] >>
+          /ColorImageResolution \graphicscache@dpi\space
+          /AutoFilterGrayImages false
+          /EncodeGrayImages true
+          /GrayImageFilter /\graphicscache@compress@mode\space
+          /GrayImageDict << /ColorTransform 1 /QFactor \graphicscache@qfactor\space /Blend 1 /HSamples [1 1 1 1] /VSamples [1 1 1 1] >>
+          /GrayImageResolution \graphicscache@dpi\space
+        >> setdistillerparams"
+        -f graphicscache\string\graphicscacheout.pdf
+      }%
+    \else
+      \immediate\write18{gs
+        -sOutputFile=\graphicscache@output\space
+        -sDEVICE=pdfwrite
+        -dCompatibilityLevel=1.4
+        -dPDFSETTINGS=/prepress
+        -dNOPAUSE -dQUIET -dBATCH
+        -c '.setpdfwrite <<
+          /AutoFilterColorImages false
+          /EncodeColorImages true
+          /ColorImageFilter /\graphicscache@compress@mode\space
+          /ColorImageDict << /ColorTransform 1 /QFactor \graphicscache@qfactor\space /Blend 1 /HSamples [1 1 1 1] /VSamples [1 1 1 1] >>
+          /ColorImageResolution \graphicscache@dpi\space
+          /AutoFilterGrayImages false
+          /EncodeGrayImages true
+          /GrayImageFilter /\graphicscache@compress@mode\space
+          /GrayImageDict << /ColorTransform 1 /QFactor \graphicscache@qfactor\space /Blend 1 /HSamples [1 1 1 1] /VSamples [1 1 1 1] >>
+          /GrayImageResolution \graphicscache@dpi\space
+        >> setdistillerparams'
+        -f graphicscache/graphicscacheout.pdf || rm \graphicscache@output
+      }%
+    \endif
   \else
     \message{Direct}%
-    \immediate\write18{
-      cp graphicscache/graphicscacheout.pdf \graphicscache@output
-    }%
+    \ifwindows
+      \immediate\write18{
+        copy graphicscache\string\graphicscacheout.pdf \graphicscache@output
+      }%
+    \else
+      \immediate\write18{
+        cp graphicscache/graphicscacheout.pdf \graphicscache@output
+      }%
+    \endif
   \fi
 }
 %    \end{macrocode}
