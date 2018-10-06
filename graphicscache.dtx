@@ -387,6 +387,7 @@
       \IfFileExists{\graphicscache@output}{%
         \graphicscache@includegraphics{\graphicscache@output}%
       }{%
+        \PackageWarning{graphicscache}{Could not find cache file \graphicscache@output, falling back to native...}{}%
         \graphicscache@native
       }%
     \fi
