@@ -278,6 +278,7 @@
 %    \begin{macrocode}
 \newcommand{\graphicscache@dorender}{%
   \message{Rendering \graphicscache@outputhash: \graphicscache@fname\space with args: \graphicscache@graphicsargs\space (master file)}%
+  \immediate\write18{mkdir -p graphicscache}%
 %   \end{macrocode}
 % First, render the graphics either using preview or standalone.
 %   \begin{macrocode}
@@ -286,26 +287,27 @@
     \immediate\write18{pdflatex
       -jobname graphicscacheout
       -interaction nonstopmode
+      -output-directory graphicscache
       '\string\PassOptionsToPackage{active}{preview}\string\makeatletter\string\def\string\graphicscache@figure{\graphicscache@outputhash}\string\makeatother\string\input{\jobname}'
-      > /dev/null || rm graphicscacheout.pdf
+      > /dev/null || rm graphicscache/graphicscacheout.pdf
     }%
   \else
     \message{standalone method}%
     \immediate\write18{pdflatex
       -jobname graphicscacheout
       -interaction nonstopmode
+      -output-directory graphicscache
       '\string\documentclass{standalone}
        \string\usepackage{graphicx}
        \string\begin{document}\string\includegraphics[\graphicscache@graphicsargs]{\graphicscache@fname}\string\end{document}'
-      || rm graphicscacheout.pdf
+      > /dev/null || rm graphicscache/graphicscacheout.pdf
     }%
   \fi
-  \immediate\write18{mkdir -p graphicscache}%
 %    \end{macrocode}
 % Now it gets complicated!
 %    \begin{macrocode}
   \ifgraphicscache@compress
-    \message{With compression: \graphicscache@compress@mode}
+    \message{With compression: \graphicscache@compress@mode}%
     \immediate\write18{gs
       -sOutputFile=\graphicscache@output\space
       -sDEVICE=pdfwrite
@@ -324,12 +326,12 @@
         /GrayImageDict << /ColorTransform 1 /QFactor \graphicscache@qfactor\space /Blend 1 /HSamples [1 1 1 1] /VSamples [1 1 1 1] >>
         /GrayImageResolution \graphicscache@dpi\space
       >> setdistillerparams'
-      -f graphicscacheout.pdf || rm \graphicscache@output
+      -f graphicscache/graphicscacheout.pdf || rm \graphicscache@output
     }%
   \else
-    \message{Direct}
+    \message{Direct}%
     \immediate\write18{
-      cp graphicscacheout.pdf \graphicscache@output
+      cp graphicscache/graphicscacheout.pdf \graphicscache@output
     }%
   \fi
 }
