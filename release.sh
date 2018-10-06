@@ -1,6 +1,6 @@
 #!/bin/bash
 
-set -e
+set -ex
 
 # source: https://stackoverflow.com/questions/29436275/how-to-prompt-for-yes-or-no-in-bash
 function yes_or_no {
@@ -12,6 +12,15 @@ function yes_or_no {
     esac
   done
 }
+
+err_report() {
+  echo
+  echo
+  echo "release.sh:$1: ERROR: Some command failed (see above)"
+  exit 1
+}
+
+trap 'err_report $LINENO' ERR
 
 if [[ $# -ne 1 ]]; then
   echo "Usage: release.sh input.tex"
@@ -74,3 +83,4 @@ echo "Finished. Please check test_release/submission.pdf for correctness."
 
 # Clean up intermediate files
 rm submission.pdf submission.out submission.aux submission.log submission.fls
+rm submission.blg submission.bbl submission.tex.orig
