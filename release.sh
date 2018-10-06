@@ -36,7 +36,10 @@ pdflatex -shell-escape -interaction nonstopmode submission.tex
 
 echo
 echo "3) Running pdflatex with render=false to determine needed files..."
-pdflatex -jobname submission -interaction nonstopmode -recorder '\makeatother\def\graphicscache@inhibit{true}\makeatletter\input{submission}'
+mv submission.tex submission.tex.orig
+echo '\makeatletter\def\graphicscache@inhibit{true}\makeatother' > submission.tex
+cat submission.tex.orig >> submission.tex
+pdflatex -interaction nonstopmode -recorder submission.tex
 
 FILES=$(grep "^INPUT" submission.fls | cut -d ' ' --complement -f 1 | grep -v '^/' | grep -v 'submission\..*' | egrep -v '.*\.(png|jpeg|jpg)')
 FILES="$FILES submission.tex"

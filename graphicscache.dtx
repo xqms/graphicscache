@@ -437,7 +437,17 @@
 %    \begin{macrocode}
   \edef\graphicscache@options{\@nameuse{opt@graphicscache.sty}}%
   \pgfkeys{/graphicscache/.cd,#1}%
-  \graphicscache@getfname{#2}%
+%    \end{macrocode}
+% If we are rendering, we need the actual filename, so that we can check
+% modification times. Otherwise, just assume the file exists, |\includegraphics|
+% will throw an error otherwise.
+%    \begin{macrocode}
+  \ifgraphicscache@render
+    \graphicscache@getfname{#2}%
+  \else
+    \edef\graphicscache@fname{#2}%
+    \graphicscache@existstrue
+  \fi
   \ifgraphicscache@exists
     \edef\graphicscache@outputhash{\pdfmdfivesum{\graphicscache@options\graphicscache@graphicsargs\graphicscache@fname}}%
     \edef\graphicscache@output{./graphicscache/\graphicscache@outputhash.pdf}%
