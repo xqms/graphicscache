@@ -388,7 +388,7 @@
         >> setdistillerparams'
         -f graphicscache/graphicscacheout.pdf || rm \graphicscache@output
       }%
-    \endif
+    \fi
   \else
     \message{Direct}%
     \ifwindows
@@ -399,7 +399,7 @@
       \immediate\write18{
         cp graphicscache/graphicscacheout.pdf \graphicscache@output
       }%
-    \endif
+    \fi
   \fi
 }
 %    \end{macrocode}
