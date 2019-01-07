@@ -141,6 +141,12 @@
 % Smaller values give higher quality. The default value is 0.15, which
 % corresponds to the ``Maximum'' setting mentioned by Adobe.
 %
+% \DescribeKey{listing}'=true|false'
+% If enabled, |graphicscache| will write an extra |.graphicscache| file with
+% mappings from |includegraphics| arguments to cache files. This can be used
+% to produce a version of the TeX source code that directly references the
+% PDF files instead of the original sources.
+%
 % \DescribeKey{render}'=true|false'
 % Controls whether rendering is allowed. The default is |true|. If |false|,
 % |graphicscache| is not allowed to create new cache files. Instead, it will
@@ -215,6 +221,7 @@
 \newif\ifgraphicscache@render
 \newif\ifgraphicscache@compress
 \newif\ifgraphicscache@preview
+\newif\ifgraphicscache@listing
 \def\graphicscache@graphicsargs{}
 \newlength\graphicscache@tmplen
 \newcommand{\graphicscache@addarg}[1]{%
@@ -272,6 +279,8 @@
     \edef\graphicscache@tmp{#1}%
     \graphicscache@addarg{page=\graphicscache@tmp}%
   },
+  listing/.is if=graphicscache@listing,
+  listing=false,
 %
 % adjustbox package
 %
@@ -283,6 +292,10 @@
 \ProcessPgfOptions{/graphicscache}\relax
 \ifdefined\graphicscache@inhibit
   \pgfkeys{/graphicscache/render=false}%
+\fi
+\ifgraphicscache@listing
+  \newwrite\graphicscache@listout
+  \immediate\openout\graphicscache@listout=\jobname.graphicscache
 \fi
 %    \end{macrocode}
 %
@@ -537,6 +550,10 @@
   \ifgraphicscache@exists
     \edef\graphicscache@outputhash{\pdfmdfivesum{\graphicscache@options\graphicscache@graphicsargs\graphicscache@fname}}%
     \edef\graphicscache@output{./graphicscache/\graphicscache@outputhash.pdf}%
+    \ifgraphicscache@listing
+      \message{graphicscache: includegraphics\{#2\} => \graphicscache@output}%
+      \immediate\write\graphicscache@listout{#2 \graphicscache@fname\space \graphicscache@output}%
+    \fi
     \graphicscache@work
   \else
     \PackageError{graphicscache}{Could not find file #2}{}%
