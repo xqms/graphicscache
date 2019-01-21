@@ -218,6 +218,7 @@
 \RequirePackage{preview}
 \RequirePackage{pgfopts}
 \RequirePackage{ifplatform}
+\RequirePackage{pdftexcmds}
 \newif\ifgraphicscache@render
 \newif\ifgraphicscache@compress
 \newif\ifgraphicscache@preview
@@ -548,7 +549,7 @@
     \graphicscache@existstrue
   \fi
   \ifgraphicscache@exists
-    \edef\graphicscache@outputhash{\pdfmdfivesum{\graphicscache@options\graphicscache@graphicsargs\graphicscache@fname}}%
+    \edef\graphicscache@outputhash{\pdf@mdfivesum{\graphicscache@options\graphicscache@graphicsargs\graphicscache@fname}}%
     \edef\graphicscache@output{./graphicscache/\graphicscache@outputhash.pdf}%
     \ifgraphicscache@listing
       \message{graphicscache: includegraphics\{#2\} => \graphicscache@output}%
