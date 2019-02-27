@@ -154,14 +154,6 @@
 % |graphicscache| will fall back to |graphicx| in-place rendering.
 % This can be used to perform a final release (see \cref{sec:release}).
 %
-% \DescribeKey{preview}'=true|false'
-% If |preview| is |true|, |graphicscache| will render the entire document
-% and confine the output to the current graphics element using the |preview|
-% package. If |false|, it will generate on-the-fly documents containing just the
-% image with documentclass |standalone|. The latter will always be quicker,
-% so |preview=false| is the default. In case you notice strange problems, try
-% |preview=true|.
-%
 % \subsection{Macros}
 %
 % \DescribeMacro{\includegraphics}[args]{path}
@@ -211,17 +203,14 @@
 \NeedsTeXFormat{LaTeX2e}[1994/06/01]
 \ProvidesPackage{graphicscache}[2018/10/02 Graphics Cache]
 \RequirePackage{graphicx}
-\RequirePackage[tightpage]{preview}
 \RequirePackage{xstring}
 \RequirePackage{filemod}
 \RequirePackage{letltxmacro}
-\RequirePackage{preview}
 \RequirePackage{pgfopts}
 \RequirePackage{ifplatform}
 \RequirePackage{pdftexcmds}
 \newif\ifgraphicscache@render
 \newif\ifgraphicscache@compress
-\newif\ifgraphicscache@preview
 \newif\ifgraphicscache@listing
 \def\graphicscache@graphicsargs{}
 \newlength\graphicscache@tmplen
@@ -236,8 +225,6 @@
   /graphicscache/.cd,
   render/.is if=graphicscache@render,
   render=true,
-  preview/.is if=graphicscache@preview,
-  preview=false,
 %    \end{macrocode}
 %    \begin{macrocode}
   compress/.is choice,
@@ -301,8 +288,8 @@
 %    \end{macrocode}
 %
 % \begin{macro}{\graphicscache@dorender}
-%    Here, we actually perform the rendering---either in standalone or preview
-%    mode. Sadly, this is quite complex due to cross-platform support.
+%    Here, we actually perform the rendering. Sadly, this is quite complex due
+%    to cross-platform support.
 %    \begin{macrocode}
 \newcommand{\graphicscache@dorender}{%
   \message{Rendering \graphicscache@outputhash: \graphicscache@fname\space with args: \graphicscache@graphicsargs\space (master file)}%
@@ -312,60 +299,34 @@
     \immediate\write18{mkdir -p graphicscache}%
   \fi
 %    \end{macrocode}
-% First, render the graphics either using preview or standalone.
+% First, render the graphics.
 %    \begin{macrocode}
-  \ifgraphicscache@preview
-    \message{preview method}%
-    \ifwindows
-      \immediate\write18{del /q graphicscache/graphicscacheout.pdf}
-      \immediate\write18{pdflatex
-        -jobname graphicscacheout
-        -interaction nonstopmode
-        -output-directory graphicscache
-        "\string\PassOptionsToPackage{active}{preview}\string\makeatletter\string\def\string\graphicscache@figure{\graphicscache@outputhash}\string\makeatother\string\input{\jobname}"
-      }%
-      \IfFileExists{graphicscache/graphicscacheout.pdf}{}{%
-        \PackageError{graphicscache}{External pdflatex call failed (see above)}{}%
-        \def\graphicscache@output{}%
-      }
-    \else
-      \immediate\write18{pdflatex
-        -jobname graphicscacheout
-        -interaction nonstopmode
-        -output-directory graphicscache
-        '\string\PassOptionsToPackage{active}{preview}\string\makeatletter\string\def\string\graphicscache@figure{\graphicscache@outputhash}\string\makeatother\string\input{\jobname}'
-        > /dev/null || rm graphicscache/graphicscacheout.pdf
-      }%
-    \fi
+  \ifwindows
+    \immediate\write18{del /q graphicscache\string\graphicscacheout.pdf}
+    \immediate\write18{pdflatex
+      -jobname graphicscacheout
+      -interaction nonstopmode
+      -output-directory graphicscache
+      "\string\documentclass{standalone}
+      \string\usepackage{graphicx}
+      \string\usepackage[export]{adjustbox}
+      \string\begin{document}\string\includegraphics[\graphicscache@graphicsargs]{\graphicscache@fname}\string\end{document}"
+    }%
+    \IfFileExists{graphicscache/graphicscacheout.pdf}{}{%
+      \PackageError{graphicscache}{External pdflatex call failed (see above)}{}%
+      \def\graphicscache@output{}%
+    }
   \else
-    \message{standalone method}%
-    \ifwindows
-      \immediate\write18{del /q graphicscache\string\graphicscacheout.pdf}
-      \immediate\write18{pdflatex
-        -jobname graphicscacheout
-        -interaction nonstopmode
-        -output-directory graphicscache
-        "\string\documentclass{standalone}
-        \string\usepackage{graphicx}
-        \string\usepackage[export]{adjustbox}
-        \string\begin{document}\string\includegraphics[\graphicscache@graphicsargs]{\graphicscache@fname}\string\end{document}"
-      }%
-      \IfFileExists{graphicscache/graphicscacheout.pdf}{}{%
-        \PackageError{graphicscache}{External pdflatex call failed (see above)}{}%
-        \def\graphicscache@output{}%
-      }
-    \else
-      \immediate\write18{pdflatex
-        -jobname graphicscacheout
-        -interaction nonstopmode
-        -output-directory graphicscache
-        '\string\documentclass{standalone}
-        \string\usepackage{graphicx}
-        \string\usepackage[export]{adjustbox}
-        \string\begin{document}\string\includegraphics[\graphicscache@graphicsargs]{\graphicscache@fname}\string\end{document}'
-        > /dev/null || rm graphicscache/graphicscacheout.pdf
-      }%
-    \fi
+    \immediate\write18{pdflatex
+      -jobname graphicscacheout
+      -interaction nonstopmode
+      -output-directory graphicscache
+      '\string\documentclass{standalone}
+      \string\usepackage{graphicx}
+      \string\usepackage[export]{adjustbox}
+      \string\begin{document}\string\includegraphics[\graphicscache@graphicsargs]{\graphicscache@fname}\string\end{document}'
+      > /dev/null || rm graphicscache/graphicscacheout.pdf
+    }%
   \fi
 %    \end{macrocode}
 % Now, call ghostscript for compression---if required, otherwise just copy the
@@ -445,48 +406,35 @@
 %    or can we just include the cached version?
 %    \begin{macrocode}
 \newcommand{\graphicscache@work}{%
-  \ifPreview
-%    \end{macrocode}
-% Render it!
-%    \begin{macrocode}
-    \ifnum\pdf@strcmp{\graphicscache@outputhash}{\graphicscache@figure}=0 %
-      \message{Rendering \graphicscache@outputhash\space with args \graphicscache@graphicsargs\space (preview file)}%
-      \setlength{\PreviewBorder}{0pt}%
-      \begin{preview}%
-        \graphicscache@native
-      \end{preview}%
-    \fi
-  \else
-    \ifgraphicscache@render
+  \ifgraphicscache@render
 %    \end{macrocode}
 % Check if output file exists and is newer than input
 %    \begin{macrocode}
-      \filemodcmp{\graphicscache@fname}{\graphicscache@output}{% input is newer
-        \graphicscache@dorender%
-      }{% Output is newer
-        \message{Already have \graphicscache@outputhash: \graphicscache@fname}%
-      }%
+    \filemodcmp{\graphicscache@fname}{\graphicscache@output}{% input is newer
+      \graphicscache@dorender%
+    }{% Output is newer
+      \message{Already have \graphicscache@outputhash: \graphicscache@fname}%
+    }%
 %    \end{macrocode}
 % If it still does not exist, we are likely in a strange environment
 % (e.g. tabu). In that case, fall back to original includegraphics.
 %    \begin{macrocode}
-      \filemodcmp{\graphicscache@fname}{\graphicscache@output}{% input is newer/output does not exist
-        \graphicscache@native
-      }{% otherwise, use the generated file!
-        \graphicscache@includegraphics{\graphicscache@output}%
-      }%
-    \else
+    \filemodcmp{\graphicscache@fname}{\graphicscache@output}{% input is newer/output does not exist
+      \graphicscache@native
+    }{% otherwise, use the generated file!
+      \graphicscache@includegraphics{\graphicscache@output}%
+    }%
+  \else
 %    \end{macrocode}
 % Here, we just look if the output file exists. If not, fall back to
 % original includegraphics.
 %    \begin{macrocode}
-      \IfFileExists{\graphicscache@output}{%
-        \graphicscache@includegraphics{\graphicscache@output}%
-      }{%
-        \PackageWarning{graphicscache}{Could not find cache file \graphicscache@output, falling back to native...}{}%
-        \graphicscache@native
-      }%
-    \fi
+    \IfFileExists{\graphicscache@output}{%
+      \graphicscache@includegraphics{\graphicscache@output}%
+    }{%
+      \PackageWarning{graphicscache}{Could not find cache file \graphicscache@output, falling back to native...}{}%
+      \graphicscache@native
+    }%
   \fi
 }
 %    \end{macrocode}
