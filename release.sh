@@ -82,5 +82,6 @@ echo
 echo "Finished. Please check test_release/submission.pdf for correctness."
 
 # Clean up intermediate files
-rm submission.pdf submission.out submission.aux submission.log submission.fls
-rm submission.blg submission.bbl submission.tex.orig
+rm -f submission.pdf submission.out submission.aux submission.log submission.fls
+rm -f submission.blg submission.bbl submission.tex.orig
+
