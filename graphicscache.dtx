@@ -212,6 +212,7 @@
 \newif\ifgraphicscache@render
 \newif\ifgraphicscache@compress
 \newif\ifgraphicscache@listing
+\newif\ifgraphicscache@hashshortnames
 \def\graphicscache@graphicsargs{}
 \newlength\graphicscache@tmplen
 \newcommand{\graphicscache@addarg}[1]{%
@@ -240,6 +241,10 @@
 %    \begin{macrocode}
   qfactor/.store in=\graphicscache@qfactor,
   qfactor={0.15},
+%    \end{macrocode}
+%    \begin{macrocode}
+  hashshortnames/.is if=graphicscache@hashshortnames,
+  hashshortnames=false,
 %    \end{macrocode}
 % We now define the list of supported graphicx arguments:
 %    \begin{macrocode}
@@ -432,7 +437,7 @@
     \IfFileExists{\graphicscache@output}{%
       \graphicscache@includegraphics{\graphicscache@output}%
     }{%
-      \PackageWarning{graphicscache}{Could not find cache file \graphicscache@output, falling back to native...}{}%
+      \PackageWarning{graphicscache}{Could not find cache file \graphicscache@output, for \graphicscache@fname, falling back to native...}{}%
       \graphicscache@native
     }%
   \fi
@@ -497,7 +502,12 @@
     \graphicscache@existstrue
   \fi
   \ifgraphicscache@exists
-    \edef\graphicscache@outputhash{\pdf@mdfivesum{\graphicscache@options\graphicscache@graphicsargs\graphicscache@fname}}%
+    \ifgraphicscache@hashshortnames
+      \edef\graphicscache@hashedname{#2}%
+    \else
+      \edef\graphicscache@hashedname{\graphicscache@fname}%
+    \fi
+    \edef\graphicscache@outputhash{\pdf@mdfivesum{\graphicscache@options\graphicscache@graphicsargs\graphicscache@hashedname}}%
     \edef\graphicscache@output{./graphicscache/\graphicscache@outputhash.pdf}%
     \ifgraphicscache@listing
       \message{graphicscache: includegraphics\{#2\} => \graphicscache@output}%
