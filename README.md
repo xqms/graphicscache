@@ -48,6 +48,23 @@ and the downscaled images. Just use the `release.sh` shell script in your source
 directory. In this case it is recommended to place the `graphicscache.sty` file
 in your source tree, since your release target will probably not have it.
 
+Hint: If you want to upload a paper on [arXiv.org](https://arxiv.org), it might
+be required to use the exact same TeX Live distribution they are using. Here's
+a way to do that using the Docker image provided by
+[bryant1410](https://github.com/bryant1410/texlive-arxiv):
+
+    # first copy graphicscache.sty and release.sh into your paper directory
+    cp ...
+    
+    # Then enter the docker container
+    docker run -v $PWD:/usr/local/workspace -ti bryant1410/texlive-arxiv /bin/bash
+    
+    # And release!
+    bash release.sh paper.tex
+
+After checking `test_release/submission.pdf`, the file `release.tar` can be uploaded
+to arXiv (they will extract it automatically).
+
 ## Documentation
 
 For more information, check the package documentation, which you can generate
