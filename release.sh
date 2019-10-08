@@ -50,7 +50,7 @@ echo '\makeatletter\def\graphicscache@inhibit{true}\makeatother' > submission.te
 cat submission.tex.orig >> submission.tex
 pdflatex -interaction nonstopmode -recorder submission.tex
 
-FILES=$(grep "^INPUT" submission.fls | cut -d ' ' --complement -f 1 | grep -v '^/' | grep -v 'submission\..*')
+FILES=$(grep "^INPUT" submission.fls | cut -d ' ' --complement -f 1 | grep -v '^/' | grep -v 'submission\..*' | sort | uniq)
 FILES="$FILES submission.tex"
 
 if [[ -e submission.bbl ]]; then
