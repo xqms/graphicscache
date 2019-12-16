@@ -57,6 +57,17 @@ if [[ -e submission.bbl ]]; then
   FILES="$FILES submission.bbl"
 fi
 
+# Some of the files are ./XYZ, some are XYZ
+CLEAN_FILES=""
+for file in $FILES; do
+	CLEAN_FILES="$CLEAN_FILES $(realpath --relative-to=. $file)"
+done
+
+FILES=$(echo $CLEAN_FILES | tr ' ' '\n' | sort -u)
+
+echo "Files to be included:"
+echo $FILES
+
 echo "4) Creating archive release.tar..."
 tar cf release.tar $FILES
 
