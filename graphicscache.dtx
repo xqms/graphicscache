@@ -451,10 +451,22 @@
 \catcode`\*=11
 \newif\ifgraphicscache@exists
 \newcommand{\graphicscache@getfname}[1]{%
+  \ifx\detokenize\@undefined\else
+    \edef\Gin@extensions{\detokenize\expandafter{\Gin@extensions}}%
+  \fi
   \begingroup
   \global\graphicscache@existstrue
   \let\input@path\Ginput@path
-  \filename@parse{#1}%
+  \set@curr@file{#1}%
+  \expandafter\filename@parse\expandafter{\@curr@file}%
+  \ifx\filename@ext\Gin@gzext
+    \expandafter\filename@parse\expandafter{\filename@base}%
+    \ifx\filename@ext\relax
+      \let\filename@ext\Gin@gzext
+    \else
+      \edef\Gin@ext{\Gin@ext\Gin@sepdefault\Gin@gzext}%
+    \fi
+  \fi
   \ifx\filename@ext\relax
     \@for\Gin@temp:=\Gin@extensions\do{%
       \ifx\Gin@ext\relax
@@ -462,6 +474,20 @@
       \fi}%
   \else
     \Gin@getbase{\Gin@sepdefault\filename@ext}%
+    \ifx\Gin@ext\relax
+    \let\Gin@savedbase\filename@base
+    \let\Gin@savedext\filename@ext
+      \edef\filename@base{\filename@base\Gin@sepdefault\filename@ext}%
+      \let\filename@ext\relax
+       \@for\Gin@temp:=\Gin@extensions\do{%
+          \ifx\Gin@ext\relax
+            \Gin@getbase\Gin@temp
+          \fi}%
+      \ifx\Gin@ext\relax
+        \let\filename@base\Gin@savedbase
+        \let\filename@ext\Gin@savedext
+      \fi
+    \fi
   \fi
   \ifx\Gin@ext\relax
     \global\graphicscache@existsfalse
@@ -469,10 +495,9 @@
     \@ifundefined{Gin@rule@\Gin@ext}%
       {\global\graphicscache@existsfalse}%
       {}%
-    \fi
+  \fi
   \ifgraphicscache@exists
     \xdef\graphicscache@fname{\Gin@base\Gin@ext}%
-    \message{Resolved #1 to \graphicscache@fname}%
   \fi
   \endgroup
 }
