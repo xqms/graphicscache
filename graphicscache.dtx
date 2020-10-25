@@ -281,6 +281,14 @@
     \edef\graphicscache@tmp{#1}%
     \graphicscache@addarg{frame=\graphicscache@tmp}%
   },
+  valign/.code={%
+    \edef\graphicscache@tmp{#1}%
+    \graphicscache@addarg{valign=\graphicscache@tmp}%
+  },
+  raise/.code={%
+    \edef\graphicscache@tmp{#1}%
+    \graphicscache@addarg{raise=\graphicscache@tmp}%
+  },
 }
 \ProcessPgfOptions{/graphicscache}\relax
 \ifdefined\graphicscache@inhibit
