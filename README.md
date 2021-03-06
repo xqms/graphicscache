@@ -15,6 +15,8 @@ each graphics element, the first compilation is typically slower than usual.
 Note: graphicscache needs the `\write18` call (also called shell escape). This
 is a security risk if you have untrusted TeX sources.
 
+graphicscache supports **PDFLaTeX** and **LuaLaTeX**, **XeLaTeX** is not supported.
+
 ## Quickstart
 
 Compile the package using
