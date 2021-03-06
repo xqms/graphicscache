@@ -41,10 +41,15 @@ like
 
 Most LaTeX editors allow you to enable shell escape in their settings.
 
+Your PDF should now re-compile faster and be significantly smaller!
+
 ## Releasing
 
 Another feature is creating a "release" tarball containing your TeX sources
-and the downscaled images. Just use the `release.sh` shell script in your source
+and the downscaled images. **NOTE**: This is not required for using the caching
+& compression features of graphicscache!
+
+Just use the `release.sh` shell script in your source
 directory. In this case it is recommended to place the `graphicscache.sty` file
 in your source tree, since your release target will probably not have it.
 
