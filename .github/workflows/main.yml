@@ -9,4 +9,12 @@ jobs:
       uses: actions/checkout@v2
     - name: Compile and test
       uses: ./.github/actions/ubuntu16
-
+  ubuntu20:
+    runs-on: ubuntu-latest
+    name: Test on Ubuntu 20.04
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v2
+    - name: Compile and test
+      uses: ./.github/actions/ubuntu20
+ 

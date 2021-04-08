@@ -1,0 +1,6 @@
+name: "ubuntu20"
+description: "Compile & test graphicscache on Ubuntu 20.04"
+runs:
+  using: 'docker'
+  image: 'Dockerfile'
+
