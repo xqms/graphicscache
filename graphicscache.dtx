@@ -1,6 +1,6 @@
 % \iffalse meta-comment
 %
-% Copyright (C) 2018 by Max Schwarz <max.schwarz@online.de>
+% Copyright (C) 2021 by Max Schwarz <max.schwarz@online.de>
 % ---------------------------------------------------------------------------
 % This work may be distributed and/or modified under the
 % conditions of the BSD 3-clause license. See LICENSE for details.
@@ -19,7 +19,7 @@
 %<package>\NeedsTeXFormat{LaTeX2e}[1999/12/01]
 %<package>\ProvidesPackage{graphicscache}
 %<*package>
-    [2018/10/03 v0.1 Cache includegraphics calls]
+    [2021/04/08 v0.2 Cache includegraphics calls]
 %</package>
 %
 %<*driver>
@@ -58,6 +58,7 @@
 %
 %
 % \changes{v0.1}{2018/10/03}{Initial version}
+% \changes{v0.2}{2021/04/08}{Better compatibility with different graphicx versions}
 %
 % \DoNotIndex{\newcommand,\newenvironment}
 %
@@ -209,6 +210,7 @@
 \RequirePackage{pgfopts}
 \RequirePackage{ifplatform}
 \RequirePackage{pdftexcmds}
+\RequirePackage{ltxcmds}
 \newif\ifgraphicscache@render
 \newif\ifgraphicscache@compress
 \newif\ifgraphicscache@listing
@@ -465,16 +467,20 @@
   \begingroup
   \global\graphicscache@existstrue
   \let\input@path\Ginput@path
-  \set@curr@file{#1}%
-  \expandafter\filename@parse\expandafter{\@curr@file}%
-  \ifx\filename@ext\Gin@gzext
-    \expandafter\filename@parse\expandafter{\filename@base}%
-    \ifx\filename@ext\relax
-      \let\filename@ext\Gin@gzext
-    \else
-      \edef\Gin@ext{\Gin@ext\Gin@sepdefault\Gin@gzext}%
+  \ltx@ifpackagelater{graphics}{2017/06/25}{%
+    \set@curr@file{#1}%
+    \expandafter\filename@parse\expandafter{\@curr@file}%
+    \ifx\filename@ext\Gin@gzext
+      \expandafter\filename@parse\expandafter{\filename@base}%
+      \ifx\filename@ext\relax
+        \let\filename@ext\Gin@gzext
+      \else
+        \edef\Gin@ext{\Gin@ext\Gin@sepdefault\Gin@gzext}%
+      \fi
     \fi
-  \fi
+  }{%
+    \filename@parse{#1}%
+  }%
   \ifx\filename@ext\relax
     \@for\Gin@temp:=\Gin@extensions\do{%
       \ifx\Gin@ext\relax
@@ -482,20 +488,22 @@
       \fi}%
   \else
     \Gin@getbase{\Gin@sepdefault\filename@ext}%
-    \ifx\Gin@ext\relax
-    \let\Gin@savedbase\filename@base
-    \let\Gin@savedext\filename@ext
-      \edef\filename@base{\filename@base\Gin@sepdefault\filename@ext}%
-      \let\filename@ext\relax
-       \@for\Gin@temp:=\Gin@extensions\do{%
-          \ifx\Gin@ext\relax
-            \Gin@getbase\Gin@temp
-          \fi}%
+    \ltx@ifpackagelater{graphics}{2017/06/25}{%
       \ifx\Gin@ext\relax
-        \let\filename@base\Gin@savedbase
-        \let\filename@ext\Gin@savedext
+      \let\Gin@savedbase\filename@base
+      \let\Gin@savedext\filename@ext
+        \edef\filename@base{\filename@base\Gin@sepdefault\filename@ext}%
+        \let\filename@ext\relax
+         \@for\Gin@temp:=\Gin@extensions\do{%
+            \ifx\Gin@ext\relax
+              \Gin@getbase\Gin@temp
+            \fi}%
+        \ifx\Gin@ext\relax
+          \let\filename@base\Gin@savedbase
+          \let\filename@ext\Gin@savedext
+        \fi
       \fi
-    \fi
+    }{}%
   \fi
   \ifx\Gin@ext\relax
     \global\graphicscache@existsfalse
