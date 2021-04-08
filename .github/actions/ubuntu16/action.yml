@@ -1,0 +1,6 @@
+name: "ubuntu16"
+description: "Compile & test graphicscache on Ubuntu 16.04"
+runs:
+  using: 'docker'
+  image: 'Dockerfile'
+
