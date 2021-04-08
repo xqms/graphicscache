@@ -8,5 +8,5 @@ jobs:
     - name: Checkout
       uses: actions/checkout@v2
     - name: Compile and test
-      uses: .github/actions/ubuntu16
+      uses: ./.github/actions/ubuntu16
 
