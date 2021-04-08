@@ -7,6 +7,7 @@ latex -interaction=nonstopmode graphicscache.ins
 pdflatex -interaction=nonstopmode graphicscache.dtx
 echo "::endgroup::"
 
+(
 cd example
 
 echo "::group::Compiling example using pdflatex"
@@ -17,6 +18,7 @@ echo "::group::Compiling example using lualatex"
 rm -f paper.aux
 TEXINPUTS=..: lualatex -interaction=nonstopmode paper
 echo "::endgroup::"
+)
 
 echo "::group::Creating CTAN package"
 ctanify --pkgname=graphicscache graphicscache.ins graphicscache.pdf README.md
