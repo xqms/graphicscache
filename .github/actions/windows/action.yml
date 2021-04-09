@@ -1,8 +1,6 @@
 name: "windows_miktex"
 description: "Compile & test graphicscache on Windows using MikTeX"
 runs:
-  using: 'composite'
-  steps:
-  - shell: bash
-    run: bash ${GITHUB_ACTION_PATH}/run.sh
+  using: 'docker'
+  image: 'Dockerfile'
 
