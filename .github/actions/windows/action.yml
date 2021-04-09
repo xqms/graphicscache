@@ -8,4 +8,4 @@ runs:
     run: docker build -t miktex_container ${GITHUB_ACTION_PATH}
   - name: "Run container"
     shell: powershell
-    run: "docker run -v ${pwd}:C:\workspace -w C:\workspace miktex_container"
+    run: "docker run -v ${pwd}:C:\\workspace -w C:\\workspace miktex_container"
