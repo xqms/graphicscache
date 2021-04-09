@@ -5,7 +5,7 @@ runs:
   steps:
   - name: "Build Docker container"
     shell: bash
-    run: docker build -t miktex_container ${{ github.action_path }}
+    run: docker build -t miktex_container ${GITHUB_ACTION_PATH}
   - name: "Run container"
     shell: bash
     run: docker run -it miktex_container -v .:/workspace -w /workspace
