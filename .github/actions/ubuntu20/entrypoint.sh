@@ -2,15 +2,25 @@
 
 set -e
 
-echo "Compiling graphicscache"
+echo "::group::Compiling graphicscache"
 latex -interaction=nonstopmode graphicscache.ins
+pdflatex -interaction=nonstopmode graphicscache.dtx
+echo "::endgroup::"
 
+(
 cd example
 
-echo "Compiling example using pdflatex"
+echo "::group::Compiling example using pdflatex"
 TEXINPUTS=..: pdflatex -interaction=nonstopmode paper
+echo "::endgroup::"
 
-echo "Compiling example using lualatex"
+echo "::group::Compiling example using lualatex"
 rm -f paper.aux
 TEXINPUTS=..: lualatex -interaction=nonstopmode paper
+echo "::endgroup::"
+)
+
+echo "::group::Creating CTAN package"
+ctanify --pkgname=graphicscache graphicscache.ins graphicscache.pdf README.md
+echo "::endgroup::"
 
