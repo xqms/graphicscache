@@ -1,6 +1,11 @@
 name: "windows_miktex"
 description: "Compile & test graphicscache on Windows using MikTeX"
 runs:
-  using: 'docker'
-  image: 'Dockerfile'
-
+  using: 'composite'
+  steps:
+  - name: "Build Docker container"
+    shell: bash
+    run: docker build -t miktex_container ${{ github.action_path }}
+  - name: "Run container"
+    shell: bash
+    run: docker run -it miktex_container -v .:/workspace -w /workspace
