@@ -30,6 +30,6 @@ jobs:
     steps:
     - name: Checkout
       uses: actions/checkout@v2
-    - name: Install MikTeX
+    - name: Compile and test
       uses: ./.github/actions/windows
  
