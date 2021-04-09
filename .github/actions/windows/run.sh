@@ -4,3 +4,9 @@ curl -o basic-miktex-x64.exe https://miktex.org/download/win/basic-miktex-x64.ex
 ./basic-miktex-x64.exe --unattended --auto-install=yes --shared --package-set=basic
 echo "Done!"
 
+(
+cd example
+
+pdflatex -shell-escape paper
+)
+
