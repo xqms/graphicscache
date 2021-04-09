@@ -1,0 +1,8 @@
+name: "windows_miktex"
+description: "Compile & test graphicscache on Windows using MikTeX"
+runs:
+  using: 'composite'
+  steps:
+  - shell: bash
+    run: ${{ github.action_path }}/run.sh
+
