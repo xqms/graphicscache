@@ -1,7 +1,7 @@
 #!/bin/bash
 
 echo "Downloading installer"
-curl -o miktexsetup-x64.zip https://miktex.org/download/win/miktexsetup-x64.zip
+curl -L -o miktexsetup-x64.zip https://miktex.org/download/win/miktexsetup-x64.zip
 echo "Unzipping"
 unzip miktexsetup-x64.zip
 
