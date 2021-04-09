@@ -9,7 +9,11 @@ echo "Running installer"
 ./miktexsetup_standalone.exe --verbose --local-package-repository=C:\miktex --package-set=basic download
 echo "Done!"
 
-ls -la C:/miktex
+ls -la /C/miktex/
+echo
+ls -la /C/miktex/bin
+echo
+ls -la C://miktex
 
 (
 cd example
