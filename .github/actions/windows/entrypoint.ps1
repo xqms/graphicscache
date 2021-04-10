@@ -1,15 +1,15 @@
 
-& latex graphicscache.ins
+& latex -interaction=nonstopmode graphicscache.ins
 if (-not $?)
 {
     throw 'graphicscache compilation failed'
 }
 
-$env:TEXINPUTS="$pwd;"
+$env:TEXINPUTS="${pwd};"
 
 cd example
 
-& pdflatex -shell-escape paper
+& pdflatex -interaction=nonstopmode -shell-escape paper
 if (-not $?)
 {
     throw 'pdflatex failed'
