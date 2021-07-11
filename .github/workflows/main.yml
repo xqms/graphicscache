@@ -24,4 +24,12 @@ jobs:
           graphicscache.tar.gz
           graphicscache.pdf
           graphicscache.sty
+  windows_miktex:
+    runs-on: windows-latest
+    name: Test on Windows using MikTeX
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v2
+    - name: Compile and test
+      uses: ./.github/actions/windows
  
