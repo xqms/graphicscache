@@ -16,3 +16,9 @@ if (-not $?)
 {
     throw 'pdflatex failed'
 }
+
+& pdflatex -interaction=nonstopmode -shell-escape nonstandard_cachedir
+if (-not $?)
+{
+    throw 'pdflatex failed'
+}
