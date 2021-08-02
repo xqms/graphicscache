@@ -19,7 +19,7 @@
 %<package>\NeedsTeXFormat{LaTeX2e}[1999/12/01]
 %<package>\ProvidesPackage{graphicscache}
 %<*package>
-    [2021/04/08 v0.2 Cache includegraphics calls]
+    [2021/08/02 v0.3 Cache includegraphics calls]
 %</package>
 %
 %<*driver>
@@ -59,6 +59,7 @@
 %
 % \changes{v0.1}{2018/10/03}{Initial version}
 % \changes{v0.2}{2021/04/08}{Better compatibility with different graphicx versions}
+% \changes{v0.3}{2021/08/02}{Added cachedir option}
 %
 % \DoNotIndex{\newcommand,\newenvironment}
 %
@@ -155,6 +156,10 @@
 % |graphicscache| will fall back to |graphicx| in-place rendering.
 % This can be used to perform a final release (see \cref{sec:release}).
 %
+% \DescribeKey{cachedir}'='<dir>
+% This key can be used to move the cache directory to another location.
+% The default value is |graphicscache|.
+%
 % \subsection{Macros}
 %
 % \DescribeMacro{\includegraphics}[args]{path}
@@ -228,6 +233,10 @@
   /graphicscache/.cd,
   render/.is if=graphicscache@render,
   render=true,
+%    \end{macrocode}
+%    \begin{macrocode}
+  cachedir/.store in=\graphicscache@cachedir,
+  cachedir={graphicscache},
 %    \end{macrocode}
 %    \begin{macrocode}
   compress/.is choice,
@@ -309,25 +318,25 @@
 \newcommand{\graphicscache@dorender}{%
   \message{Rendering \graphicscache@outputhash: \graphicscache@fname\space with args: \graphicscache@graphicsargs\space (master file)}%
   \ifwindows
-    \immediate\write18{md graphicscache 2>NUL}%
+    \immediate\write18{md "\graphicscache@cachedir" 2>NUL}%
   \else
-    \immediate\write18{mkdir -p graphicscache}%
+    \immediate\write18{mkdir -p "\graphicscache@cachedir"}%
   \fi
 %    \end{macrocode}
 % First, render the graphics.
 %    \begin{macrocode}
   \ifwindows
-    \immediate\write18{del /q graphicscache\string\graphicscacheout.pdf}
+    \immediate\write18{del /q \graphicscache@cachedir\string\graphicscacheout.pdf}
     \immediate\write18{pdflatex
       -jobname graphicscacheout
       -interaction nonstopmode
-      -output-directory graphicscache
+      -output-directory "\graphicscache@cachedir"
       "\string\documentclass{standalone}
       \string\usepackage{graphicx}
       \string\usepackage[export]{adjustbox}
       \string\begin{document}\string\includegraphics[\graphicscache@graphicsargs]{\graphicscache@fname}\string\end{document}"
     }%
-    \IfFileExists{graphicscache/graphicscacheout.pdf}{}{%
+    \IfFileExists{\graphicscache@cachedir/graphicscacheout.pdf}{}{%
       \PackageError{graphicscache}{External pdflatex call failed (see above)}{}%
       \def\graphicscache@output{}%
     }
@@ -335,12 +344,12 @@
     \immediate\write18{pdflatex
       -jobname graphicscacheout
       -interaction nonstopmode
-      -output-directory graphicscache
+      -output-directory "\graphicscache@cachedir"
       '\string\documentclass{standalone}
       \string\usepackage{graphicx}
       \string\usepackage[export]{adjustbox}
       \string\begin{document}\string\includegraphics[\graphicscache@graphicsargs]{\graphicscache@fname}\string\end{document}'
-      > /dev/null || rm graphicscache/graphicscacheout.pdf
+      > /dev/null || rm "\graphicscache@cachedir/graphicscacheout.pdf"
     }%
   \fi
 %    \end{macrocode}
@@ -368,7 +377,7 @@
           /GrayImageDict << /ColorTransform 1 /QFactor \graphicscache@qfactor\space /Blend 1 /HSamples [1 1 1 1] /VSamples [1 1 1 1] >>
           /GrayImageResolution \graphicscache@dpi\space
         >> setdistillerparams"
-        -f graphicscache\string\graphicscacheout.pdf
+        -f \graphicscache@cachedir\string\graphicscacheout.pdf
       }%
     \else
       \immediate\write18{gs
@@ -389,18 +398,18 @@
           /GrayImageDict << /ColorTransform 1 /QFactor \graphicscache@qfactor\space /Blend 1 /HSamples [1 1 1 1] /VSamples [1 1 1 1] >>
           /GrayImageResolution \graphicscache@dpi\space
         >> setdistillerparams'
-        -f graphicscache/graphicscacheout.pdf || rm \graphicscache@output
+        -f \graphicscache@cachedir/graphicscacheout.pdf || rm \graphicscache@output
       }%
     \fi
   \else
     \message{Direct}%
     \ifwindows
       \immediate\write18{
-        copy graphicscache\string\graphicscacheout.pdf \graphicscache@output
+        copy \graphicscache@cachedir\string\graphicscacheout.pdf \graphicscache@output
       }%
     \else
       \immediate\write18{
-        cp graphicscache/graphicscacheout.pdf \graphicscache@output
+        cp \graphicscache@cachedir/graphicscacheout.pdf \graphicscache@output
       }%
     \fi
   \fi
@@ -549,7 +558,7 @@
       \edef\graphicscache@hashedname{\graphicscache@fname}%
     \fi
     \edef\graphicscache@outputhash{\pdf@mdfivesum{\graphicscache@options\graphicscache@graphicsargs\graphicscache@hashedname}}%
-    \edef\graphicscache@output{./graphicscache/\graphicscache@outputhash.pdf}%
+    \edef\graphicscache@output{\graphicscache@cachedir/\graphicscache@outputhash.pdf}%
     \ifgraphicscache@listing
       \message{graphicscache: includegraphics\{#2\} => \graphicscache@output}%
       \immediate\write\graphicscache@listout{#2 \graphicscache@fname\space \graphicscache@output}%
