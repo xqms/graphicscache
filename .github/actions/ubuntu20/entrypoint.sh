@@ -34,6 +34,6 @@ echo "::endgroup::"
 )
 
 echo "::group::Creating CTAN package"
-ctanify --pkgname=graphicscache graphicscache.ins graphicscache.pdf README.md
+ctanify --pkgname=graphicscache graphicscache.ins graphicscache.pdf README.md LICENSE
 echo "::endgroup::"
 
