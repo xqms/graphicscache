@@ -359,7 +359,7 @@
   \ifgraphicscache@compress
     \message{With compression: \graphicscache@compress@mode}%
     \ifwindows
-      \immediate\write18{mgs
+      \ShellEscape{rungs
         -sOutputFile=\graphicscache@output\space
         -sDEVICE=pdfwrite
         -dCompatibilityLevel=1.4
@@ -380,7 +380,7 @@
         -f \graphicscache@cachedir\string\graphicscacheout.pdf
       }%
     \else
-      \immediate\write18{gs
+      \ShellEscape{rungs
         -sOutputFile=\graphicscache@output\space
         -sDEVICE=pdfwrite
         -dCompatibilityLevel=1.4
@@ -404,11 +404,11 @@
   \else
     \message{Direct}%
     \ifwindows
-      \immediate\write18{
+      \ShellEscape{
         copy \graphicscache@cachedir\string\graphicscacheout.pdf \graphicscache@output
       }%
     \else
-      \immediate\write18{
+      \ShellEscape{
         cp \graphicscache@cachedir/graphicscacheout.pdf \graphicscache@output
       }%
     \fi
