@@ -23,13 +23,26 @@ echo "::group::Clearing cache..."
 rm -Rf graphicscache
 echo "::endgroup::"
 
+echo "::group::Compiling example using pdflatex with shell-escape"
+TEXINPUTS=..: pdflatex -interaction=nonstopmode -shell-escape paper
+echo "::endgroup::"
+
+echo "::group::Compiling example using lualatex with shell-escape"
+rm -f paper.aux
+TEXINPUTS=..: lualatex -interaction=nonstopmode -shell-escape paper
+echo "::endgroup::"
+
+echo "::group::Clearing cache..."
+rm -Rf graphicscache
+echo "::endgroup::"
+
 echo "::group::Compiling nonstandard_cachedir using pdflatex"
-TEXINPUTS=..: pdflatex -interaction=nonstopmode nonstandard_cachedir
+TEXINPUTS=..: pdflatex -interaction=nonstopmode -shell-escape nonstandard_cachedir
 echo "::endgroup::"
 
 echo "::group::Compiling nonstandard_cachedir using lualatex"
 rm -f paper.aux
-TEXINPUTS=..: lualatex -interaction=nonstopmode nonstandard_cachedir
+TEXINPUTS=..: lualatex -interaction=nonstopmode -shell-escape nonstandard_cachedir
 echo "::endgroup::"
 )
 
