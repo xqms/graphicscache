@@ -420,7 +420,7 @@
       \string\begin{document}\string\includegraphics[\graphicscache@graphicsargs]{\graphicscache@fname}\string\end{document}"
     }%
     \IfFileExists{\graphicscache@cachedir/graphicscacheout.pdf}{}{%
-      \PackageError{graphicscache}{External pdflatex call failed (see above)}{}%
+      \PackageWarning{graphicscache}{External pdflatex call failed (see above)}%
       \def\graphicscache@output{}%
     }
   \else
