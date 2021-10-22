@@ -10,7 +10,7 @@ function process {
     # Remove cache dirs
     rm -Rf graphicscache nonstandard
 
-    echo "::group::Running $* paper"
+    echo "::group::Running $* -interaction=nonstopmode $input"
     $* -interaction=nonstopmode $input
     mv $input.pdf $output
     echo "::endgroup::"
