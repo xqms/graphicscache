@@ -1,0 +1,12 @@
+name: "windows_texlive"
+description: "Compile & test graphicscache on Windows using TeX Live"
+runs:
+  using: 'composite'
+  steps:
+  - name: "Build Docker container"
+    shell: bash
+    run: docker build -t texlive_container ${GITHUB_ACTION_PATH}
+  - name: "Run container"
+    shell: powershell
+    run: "docker run -v ${pwd}:C:\\workspace -w C:\\workspace texlive_container"
+

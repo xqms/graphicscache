@@ -213,13 +213,16 @@
 \RequirePackage{filemod}
 \RequirePackage{letltxmacro}
 \RequirePackage{pgfopts}
+\RequirePackage{pgffor}
 \RequirePackage{ifplatform}
 \RequirePackage{pdftexcmds}
 \RequirePackage{ltxcmds}
+\RequirePackage{shellesc}
 \newif\ifgraphicscache@render
 \newif\ifgraphicscache@compress
 \newif\ifgraphicscache@listing
 \newif\ifgraphicscache@hashshortnames
+\newif\ifgraphicscache@gsnotavailable\graphicscache@gsnotavailablefalse
 \def\graphicscache@graphicsargs{}
 \newlength\graphicscache@tmplen
 \newcommand{\graphicscache@addarg}[1]{%
@@ -311,6 +314,86 @@
 \fi
 %    \end{macrocode}
 %
+% \begin{macro}{\graphicscache@callgswithname}
+%    This macro calls ghostscript using the name specified in the first argument.
+%    \begin{macrocode}
+\newcommand{\graphicscache@callgswithname}[1]{%
+  \ifwindows
+    \immediate\write18{#1
+      -sOutputFile=\graphicscache@output\space
+      -sDEVICE=pdfwrite
+      -dCompatibilityLevel=1.4
+      -dPDFSETTINGS=/prepress
+      -dNOPAUSE -dQUIET -dBATCH
+      -c "<<
+        /AutoFilterColorImages false
+        /EncodeColorImages true
+        /ColorImageFilter /\graphicscache@compress@mode\space
+        /ColorImageDict << /ColorTransform 1 /QFactor \graphicscache@qfactor\space /Blend 1 /HSamples [1 1 1 1] /VSamples [1 1 1 1] >>
+        /ColorImageResolution \graphicscache@dpi\space
+        /AutoFilterGrayImages false
+        /EncodeGrayImages true
+        /GrayImageFilter /\graphicscache@compress@mode\space
+        /GrayImageDict << /ColorTransform 1 /QFactor \graphicscache@qfactor\space /Blend 1 /HSamples [1 1 1 1] /VSamples [1 1 1 1] >>
+        /GrayImageResolution \graphicscache@dpi\space
+      >> setdistillerparams"
+      -f \graphicscache@cachedir\string\graphicscacheout.pdf
+    }%
+  \else
+    \immediate\write18{#1
+      -sOutputFile=\graphicscache@output\space
+      -sDEVICE=pdfwrite
+      -dCompatibilityLevel=1.4
+      -dPDFSETTINGS=/prepress
+      -dNOPAUSE -dQUIET -dBATCH
+      -c '<<
+        /AutoFilterColorImages false
+        /EncodeColorImages true
+        /ColorImageFilter /\graphicscache@compress@mode\space
+        /ColorImageDict << /ColorTransform 1 /QFactor \graphicscache@qfactor\space /Blend 1 /HSamples [1 1 1 1] /VSamples [1 1 1 1] >>
+        /ColorImageResolution \graphicscache@dpi\space
+        /AutoFilterGrayImages false
+        /EncodeGrayImages true
+        /GrayImageFilter /\graphicscache@compress@mode\space
+        /GrayImageDict << /ColorTransform 1 /QFactor \graphicscache@qfactor\space /Blend 1 /HSamples [1 1 1 1] /VSamples [1 1 1 1] >>
+        /GrayImageResolution \graphicscache@dpi\space
+      >> setdistillerparams'
+      -f \graphicscache@cachedir/graphicscacheout.pdf || rm \graphicscache@output
+    }%
+  \fi
+}
+%    \end{macrocode}
+% \end{macro}
+% \begin{macro}{\graphicscache@callgs}
+%    This macro finds the correct ghostscript executable to call.
+%    \begin{macrocode}
+\newcommand{\graphicscache@callgs}{%
+%    \end{macrocode}
+%    If we previously established gs is not available, do nothing.
+%    \begin{macrocode}
+  \ifgraphicscache@gsnotavailable
+  \else
+    \@ifundefined{graphicscache@gscommand}{%
+      \foreach \cmd in {rungs,gs,mgs} {%
+        \message{Trying \cmd\space to call ghostscript...^^J}%
+        \graphicscache@callgswithname{\cmd}%
+        \IfFileExists{\graphicscache@output}{%
+            \message{Found a working ghostscript called '\cmd'.}%
+            \global\def\graphicscache@gscommand{\cmd}%
+            \breakforeach
+        }{}%
+      }%
+      \@ifundefined{graphicscache@gscommand}{%
+        \PackageWarning{graphicscache}{Could not find a working ghostscript executable. I will not compress any images.}{}%
+        \graphicscache@gsnotavailabletrue
+      }{}%
+    }{%
+      \graphicscache@callgswithname{\graphicscache@gscommand}
+    }%
+  \fi
+}
+%    \end{macrocode}
+% \end{macro}
 % \begin{macro}{\graphicscache@dorender}
 %    Here, we actually perform the rendering. Sadly, this is quite complex due
 %    to cross-platform support.
@@ -337,7 +420,7 @@
       \string\begin{document}\string\includegraphics[\graphicscache@graphicsargs]{\graphicscache@fname}\string\end{document}"
     }%
     \IfFileExists{\graphicscache@cachedir/graphicscacheout.pdf}{}{%
-      \PackageError{graphicscache}{External pdflatex call failed (see above)}{}%
+      \PackageWarning{graphicscache}{External pdflatex call failed (see above)}%
       \def\graphicscache@output{}%
     }
   \else
@@ -358,49 +441,7 @@
 %    \begin{macrocode}
   \ifgraphicscache@compress
     \message{With compression: \graphicscache@compress@mode}%
-    \ifwindows
-      \immediate\write18{mgs
-        -sOutputFile=\graphicscache@output\space
-        -sDEVICE=pdfwrite
-        -dCompatibilityLevel=1.4
-        -dPDFSETTINGS=/prepress
-        -dNOPAUSE -dQUIET -dBATCH
-        -c "<<
-          /AutoFilterColorImages false
-          /EncodeColorImages true
-          /ColorImageFilter /\graphicscache@compress@mode\space
-          /ColorImageDict << /ColorTransform 1 /QFactor \graphicscache@qfactor\space /Blend 1 /HSamples [1 1 1 1] /VSamples [1 1 1 1] >>
-          /ColorImageResolution \graphicscache@dpi\space
-          /AutoFilterGrayImages false
-          /EncodeGrayImages true
-          /GrayImageFilter /\graphicscache@compress@mode\space
-          /GrayImageDict << /ColorTransform 1 /QFactor \graphicscache@qfactor\space /Blend 1 /HSamples [1 1 1 1] /VSamples [1 1 1 1] >>
-          /GrayImageResolution \graphicscache@dpi\space
-        >> setdistillerparams"
-        -f \graphicscache@cachedir\string\graphicscacheout.pdf
-      }%
-    \else
-      \immediate\write18{gs
-        -sOutputFile=\graphicscache@output\space
-        -sDEVICE=pdfwrite
-        -dCompatibilityLevel=1.4
-        -dPDFSETTINGS=/prepress
-        -dNOPAUSE -dQUIET -dBATCH
-        -c '<<
-          /AutoFilterColorImages false
-          /EncodeColorImages true
-          /ColorImageFilter /\graphicscache@compress@mode\space
-          /ColorImageDict << /ColorTransform 1 /QFactor \graphicscache@qfactor\space /Blend 1 /HSamples [1 1 1 1] /VSamples [1 1 1 1] >>
-          /ColorImageResolution \graphicscache@dpi\space
-          /AutoFilterGrayImages false
-          /EncodeGrayImages true
-          /GrayImageFilter /\graphicscache@compress@mode\space
-          /GrayImageDict << /ColorTransform 1 /QFactor \graphicscache@qfactor\space /Blend 1 /HSamples [1 1 1 1] /VSamples [1 1 1 1] >>
-          /GrayImageResolution \graphicscache@dpi\space
-        >> setdistillerparams'
-        -f \graphicscache@cachedir/graphicscacheout.pdf || rm \graphicscache@output
-      }%
-    \fi
+    \graphicscache@callgs
   \else
     \message{Direct}%
     \ifwindows
