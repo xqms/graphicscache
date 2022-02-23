@@ -33,7 +33,7 @@ ls -lha paper_*.pdf
 function check_much_smaller_than {
     size1=$(stat --printf="%s" $1)
     size2=$(stat --printf="%s" $2)
-    ok=$(( size1 < (size2/2)))
+    ok=$(( size1 < (size2*3/4)))
     if [[ $ok -ne 1 ]]; then
         echo "FAIL: File $1 is not much smaller than $2 ($size1 vs $size2)!"
         exit 1
