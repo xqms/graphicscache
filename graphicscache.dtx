@@ -375,10 +375,10 @@
   \else
     \@ifundefined{graphicscache@gscommand}{%
       \foreach \cmd in {rungs,gs,mgs} {%
-        \message{Trying \cmd\space to call ghostscript...^^J}%
+        \PackageInfo{graphicscache}{Trying \cmd\space to call ghostscript...^^J}%
         \graphicscache@callgswithname{\cmd}%
         \IfFileExists{\graphicscache@output}{%
-            \message{Found a working ghostscript called '\cmd'.}%
+            \PackageInfo{graphicscache}{Found a working ghostscript called '\cmd'.}%
             \global\edef\graphicscache@gscommand{\cmd}%
             \breakforeach
         }{}%
@@ -388,6 +388,7 @@
         \graphicscache@gsnotavailabletrue
       }{}%
     }{%
+      \PackageInfo{graphicscache}{Calling gs with name '\graphicscache@gscommand'^^J}
       \graphicscache@callgswithname{\graphicscache@gscommand}
     }%
   \fi
@@ -399,7 +400,7 @@
 %    to cross-platform support.
 %    \begin{macrocode}
 \newcommand{\graphicscache@dorender}{%
-  \message{Rendering \graphicscache@outputhash: \graphicscache@fname\space with args: \graphicscache@graphicsargs\space (master file)}%
+  \PackageInfo{graphicscache}{Rendering \graphicscache@outputhash: \graphicscache@fname\space with args: \graphicscache@graphicsargs\space (master file)}%
   \ifwindows
     \immediate\write18{md "\graphicscache@cachedir" 2>NUL}%
   \else
@@ -440,10 +441,10 @@
 % file.
 %    \begin{macrocode}
   \ifgraphicscache@compress
-    \message{With compression: \graphicscache@compress@mode}%
+    \PackageInfo{graphicscache}{With compression: \graphicscache@compress@mode}%
     \graphicscache@callgs
   \else
-    \message{Direct}%
+    \PackageInfo{graphicscache}{Direct}%
     \ifwindows
       \immediate\write18{
         copy \graphicscache@cachedir\string\graphicscacheout.pdf \graphicscache@output
@@ -478,7 +479,7 @@
     \filemodcmp{\graphicscache@fname}{\graphicscache@output}{% input is newer
       \graphicscache@dorender%
     }{% Output is newer
-      \message{Already have \graphicscache@outputhash: \graphicscache@fname}%
+      \PackageInfo{graphicscache}{Already have \graphicscache@outputhash: \graphicscache@fname}%
     }%
 %    \end{macrocode}
 % If it still does not exist, we are likely in a strange environment
@@ -601,7 +602,7 @@
     \edef\graphicscache@outputhash{\pdf@mdfivesum{\graphicscache@options\graphicscache@graphicsargs\graphicscache@hashedname}}%
     \edef\graphicscache@output{\graphicscache@cachedir/\graphicscache@outputhash.pdf}%
     \ifgraphicscache@listing
-      \message{graphicscache: includegraphics\{#2\} => \graphicscache@output}%
+      \PackageInfo{graphicscache}{graphicscache: includegraphics\{#2\} => \graphicscache@output}%
       \immediate\write\graphicscache@listout{#2 \graphicscache@fname\space \graphicscache@output}%
     \fi
     \graphicscache@work
