@@ -379,7 +379,7 @@
         \graphicscache@callgswithname{\cmd}%
         \IfFileExists{\graphicscache@output}{%
             \message{Found a working ghostscript called '\cmd'.}%
-            \global\def\graphicscache@gscommand{\cmd}%
+            \global\edef\graphicscache@gscommand{\cmd}%
             \breakforeach
         }{}%
       }%
