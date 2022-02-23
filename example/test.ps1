@@ -51,14 +51,14 @@ function CheckMuchSmallerThan {
     )
     $size1 = (Get-Item $file1).length
     $size2 = (Get-Item $file2).length
-    $halfSize2 = $size2 / 2
-    if($size1 -lt $halfSize2)
+    $sizeThreshold = $size2 * 3 / 4
+    if($size1 -lt $sizeThreshold)
     {
         echo "OK: $file1 is much smaller than $file2."
     }
     else
     {
-        throw "FAIL: File $1 is not much smaller than $2 ($size1 vs $size2)!"
+        throw "FAIL: File $1 is not much smaller than $2 ($size1 vs $size2, threshold $sizeThreshold)!"
     }
 }
 
