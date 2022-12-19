@@ -319,7 +319,7 @@
 %    \begin{macrocode}
 \newcommand{\graphicscache@callgswithname}[1]{%
   \ifwindows
-    \immediate\write18{#1
+    \ShellEscape{#1
       -sOutputFile=\graphicscache@output\space
       -sDEVICE=pdfwrite
       -dCompatibilityLevel=1.4
@@ -340,7 +340,7 @@
       -f \graphicscache@cachedir\string\graphicscacheout.pdf
     }%
   \else
-    \immediate\write18{#1
+    \ShellEscape{#1
       -sOutputFile=\graphicscache@output\space
       -sDEVICE=pdfwrite
       -dCompatibilityLevel=1.4
@@ -358,7 +358,7 @@
         /GrayImageDict << /ColorTransform 1 /QFactor \graphicscache@qfactor\space /Blend 1 /HSamples [1 1 1 1] /VSamples [1 1 1 1] >>
         /GrayImageResolution \graphicscache@dpi\space
       >> setdistillerparams'
-      -f \graphicscache@cachedir/graphicscacheout.pdf || rm \graphicscache@output
+      -f \graphicscache@cachedir/graphicscacheout.pdf \string|\string| rm \graphicscache@output
     }%
   \fi
 }
@@ -402,16 +402,16 @@
 \newcommand{\graphicscache@dorender}{%
   \PackageInfo{graphicscache}{Rendering \graphicscache@outputhash: \graphicscache@fname\space with args: \graphicscache@graphicsargs\space (master file)}%
   \ifwindows
-    \immediate\write18{md "\graphicscache@cachedir" 2>NUL}%
+    \ShellEscape{md "\graphicscache@cachedir" 2>NUL}%
   \else
-    \immediate\write18{mkdir -p "\graphicscache@cachedir"}%
+    \ShellEscape{mkdir -p "\graphicscache@cachedir"}%
   \fi
 %    \end{macrocode}
 % First, render the graphics.
 %    \begin{macrocode}
   \ifwindows
-    \immediate\write18{del /q \graphicscache@cachedir\string\graphicscacheout.pdf}
-    \immediate\write18{pdflatex
+    \ShellEscape{del /q \graphicscache@cachedir\string\graphicscacheout.pdf}
+    \ShellEscape{pdflatex
       -jobname graphicscacheout
       -interaction nonstopmode
       -output-directory "\graphicscache@cachedir"
@@ -425,7 +425,7 @@
       \def\graphicscache@output{}%
     }
   \else
-    \immediate\write18{pdflatex
+    \ShellEscape{pdflatex
       -jobname graphicscacheout
       -interaction nonstopmode
       -output-directory "\graphicscache@cachedir"
@@ -433,7 +433,7 @@
       \string\usepackage{graphicx}
       \string\usepackage[export]{adjustbox}
       \string\begin{document}\string\includegraphics[\graphicscache@graphicsargs]{\graphicscache@fname}\string\end{document}'
-      > /dev/null || rm "\graphicscache@cachedir/graphicscacheout.pdf"
+      > /dev/null \string|\string| rm "\graphicscache@cachedir/graphicscacheout.pdf"
     }%
   \fi
 %    \end{macrocode}
@@ -446,11 +446,11 @@
   \else
     \PackageInfo{graphicscache}{Direct}%
     \ifwindows
-      \immediate\write18{
+      \ShellEscape{
         copy \graphicscache@cachedir\string\graphicscacheout.pdf \graphicscache@output
       }%
     \else
-      \immediate\write18{
+      \ShellEscape{
         cp \graphicscache@cachedir/graphicscacheout.pdf \graphicscache@output
       }%
     \fi
