@@ -217,7 +217,6 @@
 \RequirePackage{ifplatform}
 \RequirePackage{pdftexcmds}
 \RequirePackage{ltxcmds}
-\RequirePackage{shellesc}
 \newif\ifgraphicscache@render
 \newif\ifgraphicscache@compress
 \newif\ifgraphicscache@listing
@@ -312,6 +311,15 @@
   \newwrite\graphicscache@listout
   \immediate\openout\graphicscache@listout=\jobname.graphicscache
 \fi
+%
+% shellesc has a bug on Ubuntu 16.04 (\ShellEscape is not immediate).
+% So we simply define our own shellescape macro.
+\ifx\lastsavedimageresourcepages\@undefined
+  \protected\def\graphicscache@ShellEscape{\immediate\write18 }
+\else
+  \protected\def\graphicscache@ShellEscape#1{%
+    \directlua{os.execute("\luaescapestring{#1}")}}
+\fi
 %    \end{macrocode}
 %
 % \begin{macro}{\graphicscache@callgswithname}
@@ -319,7 +327,7 @@
 %    \begin{macrocode}
 \newcommand{\graphicscache@callgswithname}[1]{%
   \ifwindows
-    \ShellEscape{#1
+    \graphicscache@ShellEscape{#1
       -sOutputFile=\graphicscache@output\space
       -sDEVICE=pdfwrite
       -dCompatibilityLevel=1.4
@@ -340,7 +348,7 @@
       -f \graphicscache@cachedir\string\graphicscacheout.pdf
     }%
   \else
-    \ShellEscape{#1
+    \graphicscache@ShellEscape{#1
       -sOutputFile=\graphicscache@output\space
       -sDEVICE=pdfwrite
       -dCompatibilityLevel=1.4
@@ -402,16 +410,16 @@
 \newcommand{\graphicscache@dorender}{%
   \PackageInfo{graphicscache}{Rendering \graphicscache@outputhash: \graphicscache@fname\space with args: \graphicscache@graphicsargs\space (master file)}%
   \ifwindows
-    \ShellEscape{md "\graphicscache@cachedir" 2>NUL}%
+    \graphicscache@ShellEscape{md "\graphicscache@cachedir" 2>NUL}%
   \else
-    \ShellEscape{mkdir -p "\graphicscache@cachedir"}%
+    \graphicscache@ShellEscape{mkdir -p "\graphicscache@cachedir"}%
   \fi
 %    \end{macrocode}
 % First, render the graphics.
 %    \begin{macrocode}
   \ifwindows
-    \ShellEscape{del /q \graphicscache@cachedir\string\graphicscacheout.pdf}
-    \ShellEscape{pdflatex
+    \graphicscache@ShellEscape{del /q \graphicscache@cachedir\string\graphicscacheout.pdf}
+    \graphicscache@ShellEscape{pdflatex
       -jobname graphicscacheout
       -interaction nonstopmode
       -output-directory "\graphicscache@cachedir"
@@ -425,7 +433,7 @@
       \def\graphicscache@output{}%
     }
   \else
-    \ShellEscape{pdflatex
+    \graphicscache@ShellEscape{pdflatex
       -jobname graphicscacheout
       -interaction nonstopmode
       -output-directory "\graphicscache@cachedir"
@@ -446,11 +454,11 @@
   \else
     \PackageInfo{graphicscache}{Direct}%
     \ifwindows
-      \ShellEscape{
+      \graphicscache@ShellEscape{
         copy \graphicscache@cachedir\string\graphicscacheout.pdf \graphicscache@output
       }%
     \else
-      \ShellEscape{
+      \graphicscache@ShellEscape{
         cp \graphicscache@cachedir/graphicscacheout.pdf \graphicscache@output
       }%
     \fi
