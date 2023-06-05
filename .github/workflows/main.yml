@@ -6,7 +6,7 @@ jobs:
     name: Test on Ubuntu 16.04
     steps:
     - name: Checkout
-      uses: actions/checkout@v2
+      uses: actions/checkout@v3
     - name: Compile and test
       uses: ./.github/actions/ubuntu16
   ubuntu18:
@@ -14,7 +14,7 @@ jobs:
     name: Test on Ubuntu 18.04
     steps:
     - name: Checkout
-      uses: actions/checkout@v2
+      uses: actions/checkout@v3
     - name: Compile and test
       uses: ./.github/actions/ubuntu18
   ubuntu20:
@@ -22,11 +22,11 @@ jobs:
     name: Test on Ubuntu 20.04
     steps:
     - name: Checkout
-      uses: actions/checkout@v2
+      uses: actions/checkout@v3
     - name: Compile and test
       uses: ./.github/actions/ubuntu20
     - name: Upload artifacts
-      uses: actions/upload-artifact@v2
+      uses: actions/upload-artifact@v3
       with:
         path: |
           graphicscache.tar.gz
@@ -37,7 +37,7 @@ jobs:
     name: Test on Windows using MikTeX
     steps:
     - name: Checkout
-      uses: actions/checkout@v2
+      uses: actions/checkout@v3
     - name: Compile and test
       uses: ./.github/actions/windows
   windows_texlive:
@@ -45,7 +45,7 @@ jobs:
     name: Test on Windows using TeX Live
     steps:
     - name: Checkout
-      uses: actions/checkout@v2
+      uses: actions/checkout@v3
     - name: Compile and test
       uses: ./.github/actions/windows_texlive
 
