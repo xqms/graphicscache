@@ -263,12 +263,20 @@
 % We now define the list of supported graphicx arguments:
 %    \begin{macrocode}
   width/.code={%
-    \setlength\graphicscache@tmplen{#1}%
-    \graphicscache@addarg{width=\the\graphicscache@tmplen}%
+    \ifx#1!
+      \graphicscache@addarg{width=!}%
+    \else
+      \setlength\graphicscache@tmplen{#1}%
+      \graphicscache@addarg{width=\the\graphicscache@tmplen}%
+    \fi
   },
   height/.code={%
-    \setlength\graphicscache@tmplen{#1}%
-    \graphicscache@addarg{height=\the\graphicscache@tmplen}%
+    \ifx#1!
+      \graphicscache@addarg{height=!}%
+    \else
+      \setlength\graphicscache@tmplen{#1}%
+      \graphicscache@addarg{height=\the\graphicscache@tmplen}%
+    \fi
   },
   trim/.code={\graphicscache@addarg{trim=#1}},
   clip/.code={\graphicscache@addarg{clip}},
