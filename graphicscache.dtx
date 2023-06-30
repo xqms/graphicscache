@@ -219,6 +219,7 @@
 \RequirePackage{pdftexcmds}
 \RequirePackage{ltxcmds}
 \newif\ifgraphicscache@render
+\newif\ifgraphicscache@disable
 \newif\ifgraphicscache@compress
 \newif\ifgraphicscache@listing
 \newif\ifgraphicscache@hashshortnames
@@ -236,6 +237,10 @@
   /graphicscache/.cd,
   render/.is if=graphicscache@render,
   render=true,
+%    \end{macrocode}
+%    \begin{macrocode}
+  disable/.is if=graphicscache@disable,
+  disable=false,
 %    \end{macrocode}
 %    \begin{macrocode}
   cachedir/.store in=\graphicscache@cachedir,
@@ -592,6 +597,16 @@
 %    Main entry point.
 %    \begin{macrocode}
 \renewcommand{\includegraphics}[2][]{%
+%    \end{macrocode}
+% If pdfpages is in use, the best we can do is fall back to native
+% includegraphics for the initial call, which is just to figure
+% out the number of pages in the PDF.
+%    \begin{macrocode}
+  \ifdefined\pdfpages@includegraphics@status
+    \ifnum\pdfpages@includegraphics@status=2
+      \graphicscache@disabletrue
+    \fi
+  \fi
   \begingroup
   \expandarg
 %    \end{macrocode}
@@ -610,21 +625,28 @@
     \edef\graphicscache@fname{#2}%
     \graphicscache@existstrue
   \fi
-  \ifgraphicscache@exists
-    \ifgraphicscache@hashshortnames
-      \edef\graphicscache@hashedname{#2}%
-    \else
-      \edef\graphicscache@hashedname{\graphicscache@fname}%
-    \fi
-    \edef\graphicscache@outputhash{\pdf@mdfivesum{\graphicscache@options\graphicscache@graphicsargs\graphicscache@hashedname}}%
-    \edef\graphicscache@output{\graphicscache@cachedir/\graphicscache@outputhash.pdf}%
-    \ifgraphicscache@listing
-      \PackageInfo{graphicscache}{graphicscache: includegraphics\{#2\} => \graphicscache@output}%
-      \immediate\write\graphicscache@listout{#2 \graphicscache@fname\space \graphicscache@output}%
-    \fi
-    \graphicscache@work
+%    \end{macrocode}
+% Did someone specify disable=true?
+%    \begin{macrocode}
+  \ifgraphicscache@disable
+    \graphicscache@native
   \else
-    \PackageError{graphicscache}{Could not find file #2}{}%
+    \ifgraphicscache@exists
+      \ifgraphicscache@hashshortnames
+        \edef\graphicscache@hashedname{#2}%
+      \else
+        \edef\graphicscache@hashedname{\graphicscache@fname}%
+      \fi
+      \edef\graphicscache@outputhash{\pdf@mdfivesum{\graphicscache@options\graphicscache@graphicsargs\graphicscache@hashedname}}%
+      \edef\graphicscache@output{\graphicscache@cachedir/\graphicscache@outputhash.pdf}%
+      \ifgraphicscache@listing
+        \PackageInfo{graphicscache}{graphicscache: includegraphics\{#2\} => \graphicscache@output}%
+        \immediate\write\graphicscache@listout{#2 \graphicscache@fname\space \graphicscache@output}%
+      \fi
+      \graphicscache@work
+    \else
+      \PackageError{graphicscache}{Could not find file #2}{}%
+    \fi
   \fi
   \endgroup
 }
