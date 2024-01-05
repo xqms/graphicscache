@@ -602,11 +602,11 @@
 % includegraphics for the initial call, which is just to figure
 % out the number of pages in the PDF.
 %    \begin{macrocode}
-  \ifdefined\pdfpages@includegraphics@status
+  \@ifundefined{pdfpages@includegraphics@status}{}{%
     \ifnum\pdfpages@includegraphics@status=2
       \graphicscache@disabletrue
     \fi
-  \fi
+  }%
   \begingroup
   \expandarg
 %    \end{macrocode}
