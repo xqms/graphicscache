@@ -268,7 +268,7 @@
 % We now define the list of supported graphicx arguments:
 %    \begin{macrocode}
   width/.code={%
-    \ifx#1!
+    \ifx#1!%
       \graphicscache@addarg{width=!}%
     \else
       \setlength\graphicscache@tmplen{#1}%
@@ -276,7 +276,7 @@
     \fi
   },
   height/.code={%
-    \ifx#1!
+    \ifx#1!%
       \graphicscache@addarg{height=!}%
     \else
       \setlength\graphicscache@tmplen{#1}%
@@ -410,8 +410,8 @@
         \graphicscache@gsnotavailabletrue
       }{}%
     }{%
-      \PackageInfo{graphicscache}{Calling gs with name '\graphicscache@gscommand'^^J}
-      \graphicscache@callgswithname{\graphicscache@gscommand}
+      \PackageInfo{graphicscache}{Calling gs with name '\graphicscache@gscommand'^^J}%
+      \graphicscache@callgswithname{\graphicscache@gscommand}%
     }%
   \fi
 }
@@ -432,7 +432,7 @@
 % First, render the graphics.
 %    \begin{macrocode}
   \ifwindows
-    \graphicscache@ShellEscape{del /q \graphicscache@cachedir\string\graphicscacheout.pdf}
+    \graphicscache@ShellEscape{del /q \graphicscache@cachedir\string\graphicscacheout.pdf}%
     \graphicscache@ShellEscape{pdflatex
       -jobname graphicscacheout
       -interaction nonstopmode
@@ -445,7 +445,7 @@
     \IfFileExists{\graphicscache@cachedir/graphicscacheout.pdf}{}{%
       \PackageWarning{graphicscache}{External pdflatex call failed (see above)}%
       \def\graphicscache@output{}%
-    }
+    }%
   \else
     \graphicscache@ShellEscape{pdflatex
       -jobname graphicscacheout
