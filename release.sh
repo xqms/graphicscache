@@ -48,7 +48,7 @@ echo "3) Running pdflatex with render=false to determine needed files..."
 mv submission.tex submission.tex.orig
 echo '\makeatletter\def\graphicscache@inhibit{true}\makeatother' > submission.tex
 cat submission.tex.orig >> submission.tex
-pdflatex -interaction nonstopmode -recorder submission.tex &>> release.log
+pdflatex -shell-escape -interaction nonstopmode -recorder submission.tex &>> release.log
 
 grep "^INPUT" submission.fls \
   | cut -d ' ' --complement -f 1 \
@@ -88,9 +88,9 @@ fi
   mkdir test_release
   cd test_release
   tar xf ../release.tar
-  pdflatex -interaction nonstopmode submission.tex &>> release.log
-  pdflatex -interaction nonstopmode submission.tex &>> release.log
-  pdflatex -interaction nonstopmode submission.tex &>> release.log
+  pdflatex -shell-escape -interaction nonstopmode submission.tex &>> release.log
+  pdflatex -shell-escape -interaction nonstopmode submission.tex &>> release.log
+  pdflatex -shell-escape -interaction nonstopmode submission.tex &>> release.log
 )
 
 echo
