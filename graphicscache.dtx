@@ -220,7 +220,6 @@
 \RequirePackage{ifplatform}
 \RequirePackage{pdftexcmds}
 \RequirePackage{ltxcmds}
-\RequirePackage{currfile}
 \newif\ifgraphicscache@render
 \newif\ifgraphicscache@disable
 \newif\ifgraphicscache@compress
@@ -327,6 +326,7 @@
 \ifgraphicscache@listing
   \newwrite\graphicscache@listout
   \immediate\openout\graphicscache@listout=\jobname.graphicscache
+  \RequirePackage{currfile}
 \fi
 %
 % shellesc has a bug on Ubuntu 16.04 (\ShellEscape is not immediate).
