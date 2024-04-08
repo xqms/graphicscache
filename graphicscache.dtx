@@ -145,10 +145,12 @@
 % corresponds to the ``Maximum'' setting mentioned by Adobe.
 %
 % \DescribeKey{listing}'=true|false'
-% If enabled, |graphicscache| will write an extra |.graphicscache| file with
+% If enabled, |graphicscache| will write an extra |name.graphicscache| file with
 % mappings from |includegraphics| arguments to cache files. This can be used
 % to produce a version of the TeX source code that directly references the
-% PDF files instead of the original sources.
+% PDF files instead of the original sources. The format of the file is as
+% follows:\\
+% |file:line name [options] [resolved-options] resolved-name output-file|.
 %
 % \DescribeKey{render}'=true|false'
 % Controls whether rendering is allowed. The default is |true|. If |false|,
@@ -218,6 +220,7 @@
 \RequirePackage{ifplatform}
 \RequirePackage{pdftexcmds}
 \RequirePackage{ltxcmds}
+\RequirePackage{currfile}
 \newif\ifgraphicscache@render
 \newif\ifgraphicscache@disable
 \newif\ifgraphicscache@compress
@@ -641,7 +644,7 @@
       \edef\graphicscache@output{\graphicscache@cachedir/\graphicscache@outputhash.pdf}%
       \ifgraphicscache@listing
         \PackageInfo{graphicscache}{graphicscache: includegraphics\{#2\} => \graphicscache@output}%
-        \immediate\write\graphicscache@listout{#2 \graphicscache@fname\space \graphicscache@output}%
+        \immediate\write\graphicscache@listout{\currfilepath:\number\inputlineno\space #2 [#1] [\graphicscache@graphicsargs] \graphicscache@fname\space \graphicscache@output}%
       \fi
       \graphicscache@work
     \else
