@@ -39,7 +39,13 @@ echo
 echo "2) Running pdflatex (log in release.log)..."
 pdflatex -shell-escape -interaction nonstopmode submission.tex &>> release.log
 pdflatex -shell-escape -interaction nonstopmode submission.tex &>> release.log
-bibtex submission
+
+if grep -F "run Biber on the file" release.log &> /dev/null; then
+	biber submission
+else
+	bibtex submission
+fi
+
 pdflatex -shell-escape -interaction nonstopmode submission.tex &>> release.log
 pdflatex -shell-escape -interaction nonstopmode submission.tex &>> release.log
 
