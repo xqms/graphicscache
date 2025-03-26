@@ -226,6 +226,7 @@
 \newif\ifgraphicscache@listing
 \newif\ifgraphicscache@hashshortnames
 \newif\ifgraphicscache@gsnotavailable\graphicscache@gsnotavailablefalse
+\newif\ifgraphicscache@dorender
 \def\graphicscache@graphicsargs{}
 \newlength\graphicscache@tmplen
 \newcommand{\graphicscache@addarg}[1]{%
@@ -320,9 +321,6 @@
   },
 }
 \ProcessPgfOptions{/graphicscache}\relax
-\ifdefined\graphicscache@inhibit
-  \pgfkeys{/graphicscache/render=false}%
-\fi
 \ifgraphicscache@listing
   \newwrite\graphicscache@listout
   \immediate\openout\graphicscache@listout=\jobname.graphicscache
@@ -497,7 +495,19 @@
 %    or can we just include the cached version?
 %    \begin{macrocode}
 \newcommand{\graphicscache@work}{%
-  \ifgraphicscache@render
+%    \end{macrocode}
+% Parse \ifgraphicscache@render and \graphicscache@inhibit
+%    \begin{macrocode}
+  \ifdefined\graphicscache@inhibit
+    \graphicscache@dorenderfalse
+  \else
+    \ifgraphicscache@render
+      \graphicscache@dorendertrue
+    \else
+      \graphicscache@dorenderfalse
+    \fi
+  \fi
+  \ifgraphicscache@dorender
 %    \end{macrocode}
 % Check if output file exists and is newer than input
 %    \begin{macrocode}
