@@ -33,7 +33,7 @@ jobs:
           graphicscache.pdf
           graphicscache.sty
   windows_miktex:
-    runs-on: windows-latest
+    runs-on: windows-2022
     name: Test on Windows using MikTeX
     steps:
     - name: Checkout
@@ -41,7 +41,7 @@ jobs:
     - name: Compile and test
       uses: ./.github/actions/windows
   windows_texlive:
-    runs-on: windows-latest
+    runs-on: windows-2022
     name: Test on Windows using TeX Live
     steps:
     - name: Checkout
