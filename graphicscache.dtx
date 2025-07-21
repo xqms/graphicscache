@@ -498,16 +498,7 @@
 %    \end{macrocode}
 % Parse |\ifgraphicscache@render| and |\graphicscache@inhibit|
 %    \begin{macrocode}
-  \ifdefined\graphicscache@inhibit
-    \graphicscache@dorenderfalse
-  \else
-    \ifgraphicscache@render
-      \graphicscache@dorendertrue
-    \else
-      \graphicscache@dorenderfalse
-    \fi
-  \fi
-  \ifgraphicscache@dorender
+    \ifgraphicscache@dorender
 %    \end{macrocode}
 % Check if output file exists and is newer than input
 %    \begin{macrocode}
@@ -523,7 +514,7 @@
     \filemodcmp{\graphicscache@fname}{\graphicscache@output}{% input is newer/output does not exist
       \graphicscache@native
     }{% otherwise, use the generated file!
-      \graphicscache@includegraphics{\graphicscache@output}%
+      \graphicscache@includegraphics[quiet]{\graphicscache@output}%
     }%
   \else
 %    \end{macrocode}
@@ -531,7 +522,7 @@
 % original includegraphics.
 %    \begin{macrocode}
     \IfFileExists{\graphicscache@output}{%
-      \graphicscache@includegraphics{\graphicscache@output}%
+      \graphicscache@includegraphics[quiet]{\graphicscache@output}%
     }{%
       \PackageWarning{graphicscache}{Could not find cache file \graphicscache@output, for \graphicscache@fname, falling back to native...}{}%
       \graphicscache@native
@@ -620,6 +611,15 @@
       \graphicscache@disabletrue
     \fi
   }%
+  \ifdefined\graphicscache@inhibit
+    \graphicscache@dorenderfalse
+  \else
+    \ifgraphicscache@render
+      \graphicscache@dorendertrue
+    \else
+      \graphicscache@dorenderfalse
+    \fi
+  \fi
   \begingroup
   \expandarg
 %    \end{macrocode}
@@ -632,7 +632,7 @@
 % modification times. Otherwise, just assume the file exists, |\includegraphics|
 % will throw an error itself otherwise.
 %    \begin{macrocode}
-  \ifgraphicscache@render
+  \ifgraphicscache@dorender
     \graphicscache@getfname{#2}%
   \else
     \edef\graphicscache@fname{#2}%
