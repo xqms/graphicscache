@@ -220,8 +220,8 @@
 \RequirePackage{ifplatform}
 \RequirePackage{pdftexcmds}
 \RequirePackage{ltxcmds}
-\RequirePackage{xfp}
 \RequirePackage{etoolbox}
+\IfFileExists{xfp.sty}{\RequirePackage{xfp}}{}
 \newif\ifgraphicscache@render
 \newif\ifgraphicscache@disable
 \newif\ifgraphicscache@compress
@@ -461,6 +461,9 @@
   \ifgraphicscache@trim
     \ifgraphicscache@clip
       \ifgraphicscache@fullclip
+        \ifx\fpeval\undefined
+          \PackageError{graphicscache}{The fullclip feature requires the xfp package.}%
+        \fi
         \PackageInfo{graphicscache}{Trim: \graphicscache@trim@l, \graphicscache@trim@b, \graphicscache@trim@r, \graphicscache@trim@t}%
         \filename@parse{\graphicscache@fname}%
         \PackageInfo{graphicscache}{Ext: |\filename@ext|}%
