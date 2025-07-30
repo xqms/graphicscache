@@ -159,6 +159,11 @@
 % |graphicscache| will fall back to |graphicx| in-place rendering.
 % This can be used to perform a final release (see \cref{sec:release}).
 %
+% \DescribeKey{fullclip}'=true|false'
+% When |fullclip| is enabled, graphicscache will call ImageMagick's |convert|
+% to trim images, ensuring that only the specified rectangle takes up file
+% space in the resulting PDF.
+%
 % \DescribeKey{cachedir}'='<dir>
 % This key can be used to move the cache directory to another location.
 % The default value is |graphicscache|.
@@ -220,6 +225,8 @@
 \RequirePackage{ifplatform}
 \RequirePackage{pdftexcmds}
 \RequirePackage{ltxcmds}
+\RequirePackage{etoolbox}
+\IfFileExists{xfp.sty}{\RequirePackage{xfp}}{}
 \newif\ifgraphicscache@render
 \newif\ifgraphicscache@disable
 \newif\ifgraphicscache@compress
@@ -227,6 +234,9 @@
 \newif\ifgraphicscache@hashshortnames
 \newif\ifgraphicscache@gsnotavailable\graphicscache@gsnotavailablefalse
 \newif\ifgraphicscache@dorender
+\newif\ifgraphicscache@trim
+\newif\ifgraphicscache@clip
+\newif\ifgraphicscache@fullclip
 \def\graphicscache@graphicsargs{}
 \newlength\graphicscache@tmplen
 \newcommand{\graphicscache@addarg}[1]{%
@@ -235,6 +245,13 @@
   \else
     \edef\graphicscache@graphicsargs{\graphicscache@graphicsargs,#1}%
   \fi
+}
+\def\graphicscache@parsetrim#1 #2 #3 #4 #5\\{%
+  \Gin@defaultbp\graphicscache@trim@l{#1}%
+  \Gin@defaultbp\graphicscache@trim@b{#2}%
+  \Gin@defaultbp\graphicscache@trim@r{#3}%
+  \Gin@defaultbp\graphicscache@trim@t{#4}%
+  \graphicscache@trimtrue
 }
 \pgfkeys{
   /graphicscache/.cd,
@@ -268,6 +285,9 @@
   hashshortnames/.is if=graphicscache@hashshortnames,
   hashshortnames=false,
 %    \end{macrocode}
+%    \begin{macrocode}
+  fullclip/.is if=graphicscache@fullclip,
+%    \end{macrocode}
 % We now define the list of supported graphicx arguments:
 %    \begin{macrocode}
   width/.code={%
@@ -286,8 +306,8 @@
       \graphicscache@addarg{height=\the\graphicscache@tmplen}%
     \fi
   },
-  trim/.code={\graphicscache@addarg{trim=#1}},
-  clip/.code={\graphicscache@addarg{clip}},
+  trim/.code={\graphicscache@addarg{trim=#1}\graphicscache@parsetrim#1 \\},
+  clip/.code={\graphicscache@addarg{clip}\graphicscache@cliptrue},
   angle/.code={%
     \edef\graphicscache@tmp{#1}%
     \graphicscache@addarg{angle=\graphicscache@tmp}%
@@ -335,6 +355,20 @@
   \protected\def\graphicscache@ShellEscape#1{%
     \directlua{os.execute("\luaescapestring{#1}")}}
 \fi
+%    \end{macrocode}
+%    \begin{macrocode}
+\newcommand{\graphicscache@isbitmap}[1]{%
+  \fullexpandarg
+  \IfSubStr*{,png,PNG,jpg,JPG,jpeg,JPEG,}{,#1,}%
+}
+\def\graphicscache@trunc#1.#2\@empty{#1}%
+\newcommand{\graphicscache@pix}[2]{%
+  % Compute trim amount in pixels
+  \edef\graphicscache@trimtmp{\fpeval{#2 * \graphicscache@fdpi}}%
+  % Now truncate & compute remainder
+  \edef#1{\expandafter\graphicscache@trunc\graphicscache@trimtmp.\@empty}%
+  \edef#2{\fpeval{(\graphicscache@trimtmp - #1) / \graphicscache@fdpi}}%
+}
 %    \end{macrocode}
 %
 % \begin{macro}{\graphicscache@callgswithname}
@@ -428,6 +462,41 @@
     \graphicscache@ShellEscape{md "\graphicscache@cachedir" 2>NUL}%
   \else
     \graphicscache@ShellEscape{mkdir -p "\graphicscache@cachedir"}%
+  \fi
+  \ifgraphicscache@trim
+    \ifgraphicscache@clip
+      \ifgraphicscache@fullclip
+        \ifx\fpeval\undefined
+          \PackageError{graphicscache}{The fullclip feature requires the xfp package.}%
+        \fi
+        \PackageInfo{graphicscache}{Trim: \graphicscache@trim@l, \graphicscache@trim@b, \graphicscache@trim@r, \graphicscache@trim@t}%
+        \filename@parse{\graphicscache@fname}%
+        \PackageInfo{graphicscache}{Ext: |\filename@ext|}%
+        \graphicscache@isbitmap{\filename@ext}{%
+          \PackageInfo{graphicscache}{is bitmap!}%
+          \graphicscache@ShellEscape{identify -units PixelsPerInch -format '\@percentchar[fx:int(resolution.x)]' "\graphicscache@fname" > \graphicscache@output.dpi}%
+          \CatchFileDef{\graphicscache@fdpi}{\graphicscache@output.dpi}{}%
+          \PackageInfo{graphicscache}{Detected DPI: \graphicscache@fdpi (default 71)}%
+          \ifnumequal{\graphicscache@fdpi}{0}{\edef\graphicscache@fdpi{71}}{}%
+          \edef\graphicscache@fdpi{\fpeval{0.01389 * \graphicscache@fdpi}}%
+          \graphicscache@pix{\graphicscache@trim@l@pix}{\graphicscache@trim@l}%
+          \graphicscache@pix{\graphicscache@trim@b@pix}{\graphicscache@trim@b}%
+          \graphicscache@pix{\graphicscache@trim@r@pix}{\graphicscache@trim@r}%
+          \graphicscache@pix{\graphicscache@trim@t@pix}{\graphicscache@trim@t}%
+          \PackageInfo{graphicscache}{Pixel trims:
+            \graphicscache@trim@l@pix +\graphicscache@trim@l bp,
+            \graphicscache@trim@b@pix +\graphicscache@trim@b bp,
+            \graphicscache@trim@r@pix +\graphicscache@trim@r bp,
+            \graphicscache@trim@t@pix +\graphicscache@trim@t bp
+          }%
+          \graphicscache@ShellEscape{convert "\graphicscache@fname" -gravity Northwest -chop \graphicscache@trim@l@pix x\graphicscache@trim@t@pix\space -gravity Southeast -chop \graphicscache@trim@r@pix x\graphicscache@trim@b@pix\space \graphicscache@output.crop.\filename@ext}%
+          \edef\graphicscache@fname{\graphicscache@output.crop.\filename@ext}%
+          \graphicscache@addarg{trim=\graphicscache@trim@l\space\graphicscache@trim@b\space\graphicscache@trim@r\space\graphicscache@trim@t}%
+        }{%
+          \PackageInfo{graphicscache}{no bitmap!}%
+        }%
+      \fi
+    \fi
   \fi
 %    \end{macrocode}
 % First, render the graphics.
@@ -650,7 +719,12 @@
       \else
         \edef\graphicscache@hashedname{\graphicscache@fname}%
       \fi
-      \edef\graphicscache@outputhash{\pdf@mdfivesum{\graphicscache@options\graphicscache@graphicsargs\graphicscache@hashedname}}%
+      \ifgraphicscache@fullclip
+        \def\graphicscache@clipmode{fullclip}%
+      \else
+        \def\graphicscache@clipmode{nclip}%
+      \fi
+      \edef\graphicscache@outputhash{\pdf@mdfivesum{\graphicscache@options\graphicscache@graphicsargs\graphicscache@clipmode\graphicscache@hashedname}}%
       \edef\graphicscache@output{\graphicscache@cachedir/\graphicscache@outputhash.pdf}%
       \ifgraphicscache@listing
         \PackageInfo{graphicscache}{graphicscache: includegraphics\{#2\} => \graphicscache@output}%
