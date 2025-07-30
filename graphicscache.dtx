@@ -159,6 +159,11 @@
 % |graphicscache| will fall back to |graphicx| in-place rendering.
 % This can be used to perform a final release (see \cref{sec:release}).
 %
+% \DescribeKey{fullclip}'=true|false'
+% When |fullclip| is enabled, graphicscache will call ImageMagick's |convert|
+% to trim images, ensuring that only the specified rectangle takes up file
+% space in the resulting PDF.
+%
 % \DescribeKey{cachedir}'='<dir>
 % This key can be used to move the cache directory to another location.
 % The default value is |graphicscache|.
