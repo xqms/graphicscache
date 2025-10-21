@@ -2,6 +2,8 @@
 
 set -ex
 
+TEXLIVE_DOCKER="texlive/texlive@sha256:18f1e85aecc7ad016159110c97eb15475325a9b42e86c9f0f554ba071f7207d3"
+
 # source: https://stackoverflow.com/questions/29436275/how-to-prompt-for-yes-or-no-in-bash
 function yes_or_no {
   while true; do
@@ -32,29 +34,52 @@ if [[ -e submission.tex ]] && [[ $1 -ef submission.tex ]]; then
   exit 1
 fi
 
+if [[ ! -e graphicscache.sty ]]; then
+  echo "Please copy graphicscache.sty to this directory to include it in the release."
+  exit 1
+fi
+
+if ! command -v docker || ! docker container ls &> /dev/null; then
+  echo "Docker is not installed or you are not member of the docker group. Using your latex installation directly, but it might not match arXiv's one."
+  function run() {
+    "$@"
+  }
+  function run_in_test_release() {
+    ( cd test_release && "$@" )
+  }
+else
+  echo "Found docker, using it."
+  function run() {
+    docker run --rm --user $(id -u):$(id -g) -v $(pwd):$(pwd) -w $(pwd) ${TEXLIVE_DOCKER} "$@"
+  }
+  function run_in_test_release() {
+    docker run --rm --user $(id -u):$(id -g) -v $(pwd)/test_release:$(pwd)/test_release -w $(pwd)/test_release ${TEXLIVE_DOCKER} "$@"
+  }
+fi
+
 echo "1) Running latexpand to strip comments and unify your .tex file..."
-latexpand --empty-comments $1 > submission.tex
+run latexpand --empty-comments $1 > submission.tex
 
 echo
 echo "2) Running pdflatex (log in release.log)..."
-pdflatex -shell-escape -interaction nonstopmode submission.tex &>> release.log
-pdflatex -shell-escape -interaction nonstopmode submission.tex &>> release.log
+run pdflatex -shell-escape -interaction nonstopmode submission.tex &>> release.log
+run pdflatex -shell-escape -interaction nonstopmode submission.tex &>> release.log
 
 if grep -F "run Biber on the file" release.log &> /dev/null; then
-	biber submission
+  run biber submission
 else
-	bibtex submission
+  run bibtex submission
 fi
 
-pdflatex -shell-escape -interaction nonstopmode submission.tex &>> release.log
-pdflatex -shell-escape -interaction nonstopmode submission.tex &>> release.log
+run pdflatex -shell-escape -interaction nonstopmode submission.tex &>> release.log
+run pdflatex -shell-escape -interaction nonstopmode submission.tex &>> release.log
 
 echo
 echo "3) Running pdflatex with render=false to determine needed files..."
 mv submission.tex submission.tex.orig
 echo '\makeatletter\def\graphicscache@inhibit{true}\makeatother' > submission.tex
 cat submission.tex.orig >> submission.tex
-pdflatex -shell-escape -interaction nonstopmode -recorder submission.tex &>> release.log
+run pdflatex -shell-escape -interaction nonstopmode -recorder submission.tex &>> release.log
 
 grep "^INPUT" submission.fls \
   | cut -d ' ' --complement -f 1 \
@@ -90,14 +115,11 @@ if [[ -e test_release ]]; then
   fi
 fi
 
-(
-  mkdir test_release
-  cd test_release
-  tar xf ../release.tar
-  pdflatex -shell-escape -interaction nonstopmode submission.tex &>> release.log
-  pdflatex -shell-escape -interaction nonstopmode submission.tex &>> release.log
-  pdflatex -shell-escape -interaction nonstopmode submission.tex &>> release.log
-)
+mkdir test_release
+tar -xf release.tar -C test_release
+run_in_test_release pdflatex -shell-escape -interaction nonstopmode submission.tex &>> release.log
+run_in_test_release pdflatex -shell-escape -interaction nonstopmode submission.tex &>> release.log
+run_in_test_release pdflatex -shell-escape -interaction nonstopmode submission.tex &>> release.log
 
 echo
 echo "Finished. Please check test_release/submission.pdf for correctness."
