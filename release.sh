@@ -58,7 +58,8 @@ else
 fi
 
 echo "1) Running latexpand to strip comments and unify your .tex file..."
-run latexpand --empty-comments $1 > submission.tex
+echo '\PassOptionsToPackage{hashshortnames}{graphicscache}' > submission.tex
+run latexpand --empty-comments $1 >> submission.tex
 
 echo
 echo "2) Running pdflatex (log in release.log)..."
