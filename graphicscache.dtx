@@ -237,6 +237,8 @@
 \newif\ifgraphicscache@trim
 \newif\ifgraphicscache@clip
 \newif\ifgraphicscache@fullclip
+\newif\ifgraphicscache@flatten\graphicscache@flattenfalse
+\newif\ifgraphicscache@cmyk\graphicscache@cmykfalse
 \def\graphicscache@graphicsargs{}
 \newlength\graphicscache@tmplen
 \newcommand{\graphicscache@addarg}[1]{%
@@ -268,14 +270,19 @@
 %    \end{macrocode}
 %    \begin{macrocode}
   compress/.is choice,
-  compress/false/.code={\graphicscache@compressfalse},
+  compress/false/.code={\graphicscache@compressfalse \def\graphicscache@compress@mode{off}},
   compress/jpeg/.code={\graphicscache@compresstrue \def\graphicscache@compress@mode{DCTEncode}},
-  compress/flat/.code={\graphicscache@compresstrue \def\graphicscache@compress@mode{FlatEncode}},
+  compress/flat/.code={\graphicscache@compresstrue \def\graphicscache@compress@mode{FlateEncode}},
+  compress/flate/.code={\graphicscache@compresstrue \def\graphicscache@compress@mode{FlateEncode}},
   compress=jpeg,
 %    \end{macrocode}
 %    \begin{macrocode}
   dpi/.store in=\graphicscache@dpi,
   dpi=300,
+%    \end{macrocode}
+%    \begin{macrocode}
+  flatten/.is if=graphicscache@flatten,
+  cmyk/.is if=graphicscache@cmyk,
 %    \end{macrocode}
 %    \begin{macrocode}
   qfactor/.store in=\graphicscache@qfactor,
@@ -375,6 +382,20 @@
 %    This macro calls ghostscript using the name specified in the first argument.
 %    \begin{macrocode}
 \newcommand{\graphicscache@callgswithname}[1]{%
+  \ifgraphicscache@flatten
+    \def\graphicscache@flattenarg{-dHaveTransparency=false}%
+  \else
+    \def\graphicscache@flattenarg{}%
+  \fi
+  \ifgraphicscache@cmyk
+    \def\graphicscache@cmykarg{%
+      -sProcessColorModel=DeviceCMYK
+      -sColorConversionStrategy=CMYK
+      -sColorConversionStrategyForImages=CMYK
+    }%
+  \else
+    \def\graphicscache@cmykarg{}%
+  \fi
   \ifwindows
     \graphicscache@ShellEscape{#1
       -sOutputFile=\graphicscache@output\space
@@ -382,6 +403,7 @@
       -dCompatibilityLevel=1.4
       -dPDFSETTINGS=/prepress
       -dNOPAUSE -dQUIET -dBATCH
+      \graphicscache@flattenarg \graphicscache@cmykarg
       -c "<<
         /AutoFilterColorImages false
         /EncodeColorImages true
@@ -403,6 +425,7 @@
       -dCompatibilityLevel=1.4
       -dPDFSETTINGS=/prepress
       -dNOPAUSE -dQUIET -dBATCH
+      \graphicscache@flattenarg \graphicscache@cmykarg
       -c '<<
         /AutoFilterColorImages false
         /EncodeColorImages true
@@ -724,7 +747,13 @@
       \else
         \def\graphicscache@clipmode{nclip}%
       \fi
-      \edef\graphicscache@outputhash{\pdf@mdfivesum{\graphicscache@options\graphicscache@graphicsargs\graphicscache@clipmode\graphicscache@hashedname}}%
+      \ifgraphicscache@flatten
+        \edef\graphicscache@clipmode{\graphicscache@clipmode{}flat}%
+      \fi
+      \ifgraphicscache@cmyk
+        \edef\graphicscache@clipmode{\graphicscache@clipmode{}cmyk}%
+      \fi
+      \edef\graphicscache@outputhash{\pdf@mdfivesum{\graphicscache@options\graphicscache@graphicsargs\graphicscache@clipmode\graphicscache@compress@mode\graphicscache@hashedname}}%
       \edef\graphicscache@output{\graphicscache@cachedir/\graphicscache@outputhash.pdf}%
       \ifgraphicscache@listing
         \PackageInfo{graphicscache}{graphicscache: includegraphics\{#2\} => \graphicscache@output}%
