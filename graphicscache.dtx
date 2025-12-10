@@ -438,7 +438,7 @@
         /GrayImageDict << /ColorTransform 1 /QFactor \graphicscache@qfactor\space /Blend 1 /HSamples [1 1 1 1] /VSamples [1 1 1 1] >>
         /GrayImageResolution \graphicscache@dpi\space
       >> setdistillerparams'
-      -f \graphicscache@cachedir/graphicscacheout.pdf \string|\string| rm \graphicscache@output
+      -f \graphicscache@output.raw.pdf \string|\string| rm \graphicscache@output
     }%
   \fi
 }
@@ -525,30 +525,28 @@
 % First, render the graphics.
 %    \begin{macrocode}
   \ifwindows
-    \graphicscache@ShellEscape{del /q \graphicscache@cachedir\string\graphicscacheout.pdf}%
+    \graphicscache@ShellEscape{del /q \graphicscache@output.raw.pdf}%
     \graphicscache@ShellEscape{pdflatex
-      -jobname graphicscacheout
+      -jobname \graphicscache@output.raw
       -interaction nonstopmode
-      -output-directory "\graphicscache@cachedir"
       "\string\documentclass{standalone}
       \string\usepackage{graphicx}
       \string\usepackage[export]{adjustbox}
       \string\begin{document}\string\includegraphics[\graphicscache@graphicsargs]{\graphicscache@fname}\string\end{document}"
     }%
-    \IfFileExists{\graphicscache@cachedir/graphicscacheout.pdf}{}{%
+    \IfFileExists{\graphicscache@output.raw.pdf}{}{%
       \PackageWarning{graphicscache}{External pdflatex call failed (see above)}%
       \def\graphicscache@output{}%
     }%
   \else
     \graphicscache@ShellEscape{pdflatex
-      -jobname graphicscacheout
+      -jobname \graphicscache@output.raw
       -interaction nonstopmode
-      -output-directory "\graphicscache@cachedir"
       '\string\documentclass{standalone}
       \string\usepackage{graphicx}
       \string\usepackage[export]{adjustbox}
       \string\begin{document}\string\includegraphics[\graphicscache@graphicsargs]{\graphicscache@fname}\string\end{document}'
-      > /dev/null \string|\string| rm "\graphicscache@cachedir/graphicscacheout.pdf"
+      > /dev/null \string|\string| rm "\graphicscache@output.raw.pdf"
     }%
   \fi
 %    \end{macrocode}
@@ -562,11 +560,11 @@
     \PackageInfo{graphicscache}{Direct}%
     \ifwindows
       \graphicscache@ShellEscape{
-        copy \graphicscache@cachedir\string\graphicscacheout.pdf \graphicscache@output
+        copy \graphicscache@output.raw.pdf \graphicscache@output
       }%
     \else
       \graphicscache@ShellEscape{
-        cp \graphicscache@cachedir/graphicscacheout.pdf \graphicscache@output
+        cp \graphicscache@output.raw.pdf \graphicscache@output
       }%
     \fi
   \fi
