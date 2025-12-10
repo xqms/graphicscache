@@ -403,7 +403,7 @@
       -dCompatibilityLevel=1.4
       -dPDFSETTINGS=/prepress
       -dNOPAUSE -dQUIET -dBATCH
-      \graphicscache@flattenarg \graphicscache@cmykarg
+      \graphicscache@flattenarg\space \graphicscache@cmykarg\space
       -c "<<
         /AutoFilterColorImages false
         /EncodeColorImages true
@@ -416,7 +416,7 @@
         /GrayImageDict << /ColorTransform 1 /QFactor \graphicscache@qfactor\space /Blend 1 /HSamples [1 1 1 1] /VSamples [1 1 1 1] >>
         /GrayImageResolution \graphicscache@dpi\space
       >> setdistillerparams"
-      -f \graphicscache@cachedir\string\graphicscacheout.pdf
+      -f \graphicscache@output.raw.pdf
     }%
   \else
     \graphicscache@ShellEscape{#1
@@ -425,7 +425,7 @@
       -dCompatibilityLevel=1.4
       -dPDFSETTINGS=/prepress
       -dNOPAUSE -dQUIET -dBATCH
-      \graphicscache@flattenarg \graphicscache@cmykarg
+      \graphicscache@flattenarg\space \graphicscache@cmykarg\space
       -c '<<
         /AutoFilterColorImages false
         /EncodeColorImages true
