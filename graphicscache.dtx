@@ -283,6 +283,8 @@
 %    \begin{macrocode}
   flatten/.is if=graphicscache@flatten,
   cmyk/.is if=graphicscache@cmyk,
+  output icc profile/.store in=\graphicscache@outputicc,
+  output icc profile={},
 %    \end{macrocode}
 %    \begin{macrocode}
   qfactor/.store in=\graphicscache@qfactor,
@@ -396,6 +398,11 @@
   \else
     \def\graphicscache@cmykarg{}%
   \fi
+  \ifdefempty{\graphicscache@outputicc}{%
+    \def\graphicscache@outputiccarg{}%
+  }{%
+    \edef\graphicscache@outputiccarg{-sOutputICCProfile=\graphicscache@outputicc}%
+  }%
   \ifwindows
     \graphicscache@ShellEscape{#1
       -sOutputFile=\graphicscache@output\space
@@ -403,7 +410,7 @@
       -dCompatibilityLevel=1.4
       -dPDFSETTINGS=/prepress
       -dNOPAUSE -dQUIET -dBATCH
-      \graphicscache@flattenarg\space \graphicscache@cmykarg\space
+      \graphicscache@flattenarg\space \graphicscache@cmykarg\space \graphicscache@outputiccarg\space
       -c "<<
         /AutoFilterColorImages false
         /EncodeColorImages true
@@ -425,7 +432,7 @@
       -dCompatibilityLevel=1.4
       -dPDFSETTINGS=/prepress
       -dNOPAUSE -dQUIET -dBATCH
-      \graphicscache@flattenarg\space \graphicscache@cmykarg\space
+      \graphicscache@flattenarg\space \graphicscache@cmykarg\space \graphicscache@outputiccarg\space
       -c '<<
         /AutoFilterColorImages false
         /EncodeColorImages true
