@@ -1,5 +1,4 @@
-FROM xqms/ubuntu_texlive:16.04
+FROM xqms/ubuntu_texlive:24.04
 
 COPY entrypoint.sh /entrypoint.sh
 ENTRYPOINT ["/entrypoint.sh"]
-

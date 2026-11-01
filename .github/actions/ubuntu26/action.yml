@@ -1,0 +1,5 @@
+name: "ubuntu26"
+description: "Compile & test graphicscache on Ubuntu 26.04"
+runs:
+  using: 'docker'
+  image: 'Dockerfile'

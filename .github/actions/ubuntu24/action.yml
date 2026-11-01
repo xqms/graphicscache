@@ -1,0 +1,5 @@
+name: "ubuntu24"
+description: "Compile & test graphicscache on Ubuntu 24.04"
+runs:
+  using: 'docker'
+  image: 'Dockerfile'
