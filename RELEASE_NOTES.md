@@ -26,6 +26,13 @@
 - `disable` key and automatic detection of `pdfpages`; support for
   `width=!` / `height=!`.
 - Listing format extended with the current file path and options.
+- `alt` key (alternative text, e.g. set by the `markdown` package) is
+  supported. It is not part of the cache key and is passed to the final
+  inclusion of the cached PDF (ignored if `graphicx` does not know `alt`).
+- Unsupported `\includegraphics` keys now produce a helpful error listing
+  the supported keys. With `disable=true`, unsupported keys are passed through
+  to the native `\includegraphics`. Unknown package options are reported as
+  such.
 
 ### Fixes
 
