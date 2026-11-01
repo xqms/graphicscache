@@ -758,6 +758,9 @@
       \ifgraphicscache@cmyk
         \edef\graphicscache@clipmode{\graphicscache@clipmode{}cmyk}%
       \fi
+      \ifdefempty{\graphicscache@outputicc}{}{%
+        \edef\graphicscache@clipmode{\graphicscache@clipmode{}icc:\graphicscache@outputicc}%
+      }%
       \edef\graphicscache@outputhash{\pdf@mdfivesum{\graphicscache@options\graphicscache@graphicsargs\graphicscache@clipmode\graphicscache@compress@mode\graphicscache@hashedname}}%
       \edef\graphicscache@output{\graphicscache@cachedir/\graphicscache@outputhash.pdf}%
       \ifgraphicscache@listing
