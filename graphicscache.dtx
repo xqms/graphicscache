@@ -120,24 +120,47 @@
 % \subsection{Generated files}
 %
 % |graphicscache| will create a folder called |graphicscache| in the compilation
-% directory. Additionally, latex output files under the jobname
-% |graphicscacheout| will be created. All of these files and folders are
-% temporary and can be deleted safely (at the cost of re-creating the cache).
+% directory (see |cachedir|). It contains one PDF file per cached image.
+% Temporary files created during rendering are placed in the same folder and
+% removed afterwards, so multiple compilation processes can render
+% concurrently. The folder can be deleted safely (at the cost of re-creating
+% the cache).
 %
 % \subsection{Package options}
 %
-% \DescribeKey{compress}'=false|flat|jpeg'
+% \DescribeKey{compress}'=false|flate|jpeg'
 % Specifies the image compression algorithm. If |false|, the ghostscript call
 % is skipped, thus embedding the image at its original resolution and format.
-% If |flat|, the lossless |FlatEncode| algorithm is chosen. Finally, |jpeg|
+% If |flate|, the lossless |FlateEncode| algorithm is chosen (|flat| is
+% accepted as an alias). Finally, |jpeg|
 % indicates that JPEG encoding using |DCTEncode| is to be performed.
+% The default is |jpeg|.
 %
-% \textbf{Note:} In the |flat| case, the images are still downsampled to match
+% \textbf{Note:} In the |flate| case, the images are still downsampled to match
 % the DPI specified using the |dpi| key.
 %
 % \DescribeKey{dpi}'='<number>
 % Controls the image resolution in dots per inch. The default value is 300.
 % This option only takes effect if |compress| is not |false|.
+%
+% \DescribeKey{flatten}'=true|false'
+% If enabled, transparency is flattened by ghostscript
+% (|-dHaveTransparency=false|). This is useful for print workflows or
+% journals that do not accept transparency. Only takes effect if |compress|
+% is not |false|. The default is |false|.
+%
+% \DescribeKey{cmyk}'=true|false'
+% If enabled, ghostscript converts all colors and images to the CMYK color
+% space. Only takes effect if |compress| is not |false|.
+% The default is |false|.
+%
+% \DescribeKey{output icc profile}'='<file>
+% Path to an ICC profile that ghostscript should use as output profile
+% (|-sOutputICCProfile|), e.g.\ to control the CMYK conversion performed by
+% |cmyk|. Only takes effect if |compress| is not |false|. By default, no
+% profile is passed and ghostscript uses its built-in default. Note that only
+% the path is part of the cache key: if you modify the profile file in place,
+% delete the cache folder to re-render.
 %
 % \DescribeKey{qfactor}'='<number>
 % This controls the quality parameter of the JPEG encoder (see |compress|).
@@ -237,6 +260,8 @@
 \newif\ifgraphicscache@trim
 \newif\ifgraphicscache@clip
 \newif\ifgraphicscache@fullclip
+\newif\ifgraphicscache@flatten\graphicscache@flattenfalse
+\newif\ifgraphicscache@cmyk\graphicscache@cmykfalse
 \def\graphicscache@graphicsargs{}
 \newlength\graphicscache@tmplen
 \newcommand{\graphicscache@addarg}[1]{%
@@ -268,14 +293,21 @@
 %    \end{macrocode}
 %    \begin{macrocode}
   compress/.is choice,
-  compress/false/.code={\graphicscache@compressfalse},
+  compress/false/.code={\graphicscache@compressfalse \def\graphicscache@compress@mode{off}},
   compress/jpeg/.code={\graphicscache@compresstrue \def\graphicscache@compress@mode{DCTEncode}},
-  compress/flat/.code={\graphicscache@compresstrue \def\graphicscache@compress@mode{FlatEncode}},
+  compress/flat/.code={\graphicscache@compresstrue \def\graphicscache@compress@mode{FlateEncode}},
+  compress/flate/.code={\graphicscache@compresstrue \def\graphicscache@compress@mode{FlateEncode}},
   compress=jpeg,
 %    \end{macrocode}
 %    \begin{macrocode}
   dpi/.store in=\graphicscache@dpi,
   dpi=300,
+%    \end{macrocode}
+%    \begin{macrocode}
+  flatten/.is if=graphicscache@flatten,
+  cmyk/.is if=graphicscache@cmyk,
+  output icc profile/.store in=\graphicscache@outputicc,
+  output icc profile={},
 %    \end{macrocode}
 %    \begin{macrocode}
   qfactor/.store in=\graphicscache@qfactor,
@@ -375,13 +407,33 @@
 %    This macro calls ghostscript using the name specified in the first argument.
 %    \begin{macrocode}
 \newcommand{\graphicscache@callgswithname}[1]{%
+  \ifgraphicscache@flatten
+    \def\graphicscache@flattenarg{-dHaveTransparency=false}%
+  \else
+    \def\graphicscache@flattenarg{}%
+  \fi
+  \ifgraphicscache@cmyk
+    \def\graphicscache@cmykarg{%
+      -sProcessColorModel=DeviceCMYK
+      -sColorConversionStrategy=CMYK
+      -sColorConversionStrategyForImages=CMYK
+    }%
+  \else
+    \def\graphicscache@cmykarg{}%
+  \fi
+  \ifdefempty{\graphicscache@outputicc}{%
+    \def\graphicscache@outputiccarg{}%
+  }{%
+    \edef\graphicscache@outputiccarg{-sOutputICCProfile="\graphicscache@outputicc"}%
+  }%
   \ifwindows
     \graphicscache@ShellEscape{#1
-      -sOutputFile=\graphicscache@output\space
+      -sOutputFile="\graphicscache@output"
       -sDEVICE=pdfwrite
       -dCompatibilityLevel=1.4
       -dPDFSETTINGS=/prepress
       -dNOPAUSE -dQUIET -dBATCH
+      \graphicscache@flattenarg\space \graphicscache@cmykarg\space \graphicscache@outputiccarg\space
       -c "<<
         /AutoFilterColorImages false
         /EncodeColorImages true
@@ -394,15 +446,16 @@
         /GrayImageDict << /ColorTransform 1 /QFactor \graphicscache@qfactor\space /Blend 1 /HSamples [1 1 1 1] /VSamples [1 1 1 1] >>
         /GrayImageResolution \graphicscache@dpi\space
       >> setdistillerparams"
-      -f \graphicscache@cachedir\string\graphicscacheout.pdf
+      -f "\graphicscache@raw"
     }%
   \else
     \graphicscache@ShellEscape{#1
-      -sOutputFile=\graphicscache@output\space
+      -sOutputFile="\graphicscache@output"
       -sDEVICE=pdfwrite
       -dCompatibilityLevel=1.4
       -dPDFSETTINGS=/prepress
       -dNOPAUSE -dQUIET -dBATCH
+      \graphicscache@flattenarg\space \graphicscache@cmykarg\space \graphicscache@outputiccarg\space
       -c '<<
         /AutoFilterColorImages false
         /EncodeColorImages true
@@ -415,7 +468,7 @@
         /GrayImageDict << /ColorTransform 1 /QFactor \graphicscache@qfactor\space /Blend 1 /HSamples [1 1 1 1] /VSamples [1 1 1 1] >>
         /GrayImageResolution \graphicscache@dpi\space
       >> setdistillerparams'
-      -f \graphicscache@cachedir/graphicscacheout.pdf \string|\string| rm \graphicscache@output
+      -f "\graphicscache@raw" \string|\string| rm "\graphicscache@output"
     }%
   \fi
 }
@@ -458,8 +511,17 @@
 %    \begin{macrocode}
 \newcommand{\graphicscache@dorender}{%
   \PackageInfo{graphicscache}{Rendering \graphicscache@outputhash: \graphicscache@fname\space with args: \graphicscache@graphicsargs\space (master file)}%
+  \edef\graphicscache@rawname{\graphicscache@outputhash.pdf.raw}%
+  \edef\graphicscache@raw{\graphicscache@cachedir/\graphicscache@rawname.pdf}%
   \ifwindows
-    \graphicscache@ShellEscape{md "\graphicscache@cachedir" 2>NUL}%
+%    \end{macrocode}
+% |cmd.exe| interprets forward slashes as option switches, so we need native
+% paths for |md|, |del|, and |copy|.
+%    \begin{macrocode}
+    \StrSubstitute{\graphicscache@cachedir}{/}{\@backslashchar}[\graphicscache@cachedir@win]%
+    \edef\graphicscache@output@win{\graphicscache@cachedir@win\@backslashchar\graphicscache@outputhash.pdf}%
+    \edef\graphicscache@raw@win{\graphicscache@cachedir@win\@backslashchar\graphicscache@rawname.pdf}%
+    \graphicscache@ShellEscape{md "\graphicscache@cachedir@win" 2>NUL}%
   \else
     \graphicscache@ShellEscape{mkdir -p "\graphicscache@cachedir"}%
   \fi
@@ -474,7 +536,7 @@
         \PackageInfo{graphicscache}{Ext: |\filename@ext|}%
         \graphicscache@isbitmap{\filename@ext}{%
           \PackageInfo{graphicscache}{is bitmap!}%
-          \graphicscache@ShellEscape{identify -units PixelsPerInch -format '\@percentchar[fx:int(resolution.x)]' "\graphicscache@fname" > \graphicscache@output.dpi}%
+          \graphicscache@ShellEscape{identify -units PixelsPerInch -format '\@percentchar[fx:int(resolution.x)]' "\graphicscache@fname" > "\graphicscache@output.dpi"}%
           \CatchFileDef{\graphicscache@fdpi}{\graphicscache@output.dpi}{}%
           \PackageInfo{graphicscache}{Detected DPI: \graphicscache@fdpi (default 71)}%
           \ifnumequal{\graphicscache@fdpi}{0}{\edef\graphicscache@fdpi{71}}{}%
@@ -489,7 +551,7 @@
             \graphicscache@trim@r@pix +\graphicscache@trim@r bp,
             \graphicscache@trim@t@pix +\graphicscache@trim@t bp
           }%
-          \graphicscache@ShellEscape{convert "\graphicscache@fname" -gravity Northwest -chop \graphicscache@trim@l@pix x\graphicscache@trim@t@pix\space -gravity Southeast -chop \graphicscache@trim@r@pix x\graphicscache@trim@b@pix\space \graphicscache@output.crop.\filename@ext}%
+          \graphicscache@ShellEscape{convert "\graphicscache@fname" -gravity Northwest -chop \graphicscache@trim@l@pix x\graphicscache@trim@t@pix\space -gravity Southeast -chop \graphicscache@trim@r@pix x\graphicscache@trim@b@pix\space "\graphicscache@output.crop.\filename@ext"}%
           \edef\graphicscache@fname{\graphicscache@output.crop.\filename@ext}%
           \graphicscache@addarg{trim=\graphicscache@trim@l\space\graphicscache@trim@b\space\graphicscache@trim@r\space\graphicscache@trim@t}%
         }{%
@@ -502,9 +564,9 @@
 % First, render the graphics.
 %    \begin{macrocode}
   \ifwindows
-    \graphicscache@ShellEscape{del /q \graphicscache@cachedir\string\graphicscacheout.pdf}%
+    \graphicscache@ShellEscape{del /q "\graphicscache@raw@win" 2>NUL}%
     \graphicscache@ShellEscape{pdflatex
-      -jobname graphicscacheout
+      -jobname \graphicscache@rawname\space
       -interaction nonstopmode
       -output-directory "\graphicscache@cachedir"
       "\string\documentclass{standalone}
@@ -512,20 +574,20 @@
       \string\usepackage[export]{adjustbox}
       \string\begin{document}\string\includegraphics[\graphicscache@graphicsargs]{\graphicscache@fname}\string\end{document}"
     }%
-    \IfFileExists{\graphicscache@cachedir/graphicscacheout.pdf}{}{%
+    \IfFileExists{\graphicscache@raw}{}{%
       \PackageWarning{graphicscache}{External pdflatex call failed (see above)}%
       \def\graphicscache@output{}%
     }%
   \else
     \graphicscache@ShellEscape{pdflatex
-      -jobname graphicscacheout
+      -jobname \graphicscache@rawname\space
       -interaction nonstopmode
       -output-directory "\graphicscache@cachedir"
       '\string\documentclass{standalone}
       \string\usepackage{graphicx}
       \string\usepackage[export]{adjustbox}
       \string\begin{document}\string\includegraphics[\graphicscache@graphicsargs]{\graphicscache@fname}\string\end{document}'
-      > /dev/null \string|\string| rm "\graphicscache@cachedir/graphicscacheout.pdf"
+      > /dev/null \string|\string| rm "\graphicscache@raw"
     }%
   \fi
 %    \end{macrocode}
@@ -539,13 +601,35 @@
     \PackageInfo{graphicscache}{Direct}%
     \ifwindows
       \graphicscache@ShellEscape{
-        copy \graphicscache@cachedir\string\graphicscacheout.pdf \graphicscache@output
+        copy "\graphicscache@raw@win" "\graphicscache@output@win"
       }%
     \else
       \graphicscache@ShellEscape{
-        cp \graphicscache@cachedir/graphicscacheout.pdf \graphicscache@output
+        cp "\graphicscache@raw" "\graphicscache@output"
       }%
     \fi
+  \fi
+%    \end{macrocode}
+% Finally, remove the temporary files (intermediate PDF, latex output files,
+% and |fullclip| helper files). Only the final cache file is kept.
+%    \begin{macrocode}
+  \ifwindows
+    \graphicscache@ShellEscape{del /q
+      "\graphicscache@raw@win"
+      "\graphicscache@cachedir@win\@backslashchar\graphicscache@rawname.aux"
+      "\graphicscache@cachedir@win\@backslashchar\graphicscache@rawname.log"
+      "\graphicscache@cachedir@win\@backslashchar\graphicscache@outputhash.pdf.dpi"
+      "\graphicscache@cachedir@win\@backslashchar\graphicscache@outputhash.pdf.crop.*"
+      2>NUL
+    }%
+  \else
+    \graphicscache@ShellEscape{rm -f
+      "\graphicscache@raw"
+      "\graphicscache@cachedir/\graphicscache@rawname.aux"
+      "\graphicscache@cachedir/\graphicscache@rawname.log"
+      "\graphicscache@cachedir/\graphicscache@outputhash.pdf.dpi"
+      "\graphicscache@cachedir/\graphicscache@outputhash.pdf.crop."*
+    }%
   \fi
 }
 %    \end{macrocode}
@@ -724,7 +808,16 @@
       \else
         \def\graphicscache@clipmode{nclip}%
       \fi
-      \edef\graphicscache@outputhash{\pdf@mdfivesum{\graphicscache@options\graphicscache@graphicsargs\graphicscache@clipmode\graphicscache@hashedname}}%
+      \ifgraphicscache@flatten
+        \edef\graphicscache@clipmode{\graphicscache@clipmode{}flat}%
+      \fi
+      \ifgraphicscache@cmyk
+        \edef\graphicscache@clipmode{\graphicscache@clipmode{}cmyk}%
+      \fi
+      \ifdefempty{\graphicscache@outputicc}{}{%
+        \edef\graphicscache@clipmode{\graphicscache@clipmode{}icc:\graphicscache@outputicc}%
+      }%
+      \edef\graphicscache@outputhash{\pdf@mdfivesum{\graphicscache@options\graphicscache@graphicsargs\graphicscache@clipmode\graphicscache@compress@mode\graphicscache@hashedname}}%
       \edef\graphicscache@output{\graphicscache@cachedir/\graphicscache@outputhash.pdf}%
       \ifgraphicscache@listing
         \PackageInfo{graphicscache}{graphicscache: includegraphics\{#2\} => \graphicscache@output}%
