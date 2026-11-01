@@ -120,24 +120,47 @@
 % \subsection{Generated files}
 %
 % |graphicscache| will create a folder called |graphicscache| in the compilation
-% directory. Additionally, latex output files under the jobname
-% |graphicscacheout| will be created. All of these files and folders are
-% temporary and can be deleted safely (at the cost of re-creating the cache).
+% directory (see |cachedir|). It contains one PDF file per cached image.
+% Temporary files created during rendering are placed in the same folder and
+% removed afterwards, so multiple compilation processes can render
+% concurrently. The folder can be deleted safely (at the cost of re-creating
+% the cache).
 %
 % \subsection{Package options}
 %
-% \DescribeKey{compress}'=false|flat|jpeg'
+% \DescribeKey{compress}'=false|flate|jpeg'
 % Specifies the image compression algorithm. If |false|, the ghostscript call
 % is skipped, thus embedding the image at its original resolution and format.
-% If |flat|, the lossless |FlatEncode| algorithm is chosen. Finally, |jpeg|
+% If |flate|, the lossless |FlateEncode| algorithm is chosen (|flat| is
+% accepted as an alias). Finally, |jpeg|
 % indicates that JPEG encoding using |DCTEncode| is to be performed.
+% The default is |jpeg|.
 %
-% \textbf{Note:} In the |flat| case, the images are still downsampled to match
+% \textbf{Note:} In the |flate| case, the images are still downsampled to match
 % the DPI specified using the |dpi| key.
 %
 % \DescribeKey{dpi}'='<number>
 % Controls the image resolution in dots per inch. The default value is 300.
 % This option only takes effect if |compress| is not |false|.
+%
+% \DescribeKey{flatten}'=true|false'
+% If enabled, transparency is flattened by ghostscript
+% (|-dHaveTransparency=false|). This is useful for print workflows or
+% journals that do not accept transparency. Only takes effect if |compress|
+% is not |false|. The default is |false|.
+%
+% \DescribeKey{cmyk}'=true|false'
+% If enabled, ghostscript converts all colors and images to the CMYK color
+% space. Only takes effect if |compress| is not |false|.
+% The default is |false|.
+%
+% \DescribeKey{output icc profile}'='<file>
+% Path to an ICC profile that ghostscript should use as output profile
+% (|-sOutputICCProfile|), e.g.\ to control the CMYK conversion performed by
+% |cmyk|. Only takes effect if |compress| is not |false|. By default, no
+% profile is passed and ghostscript uses its built-in default. Note that only
+% the path is part of the cache key: if you modify the profile file in place,
+% delete the cache folder to re-render.
 %
 % \DescribeKey{qfactor}'='<number>
 % This controls the quality parameter of the JPEG encoder (see |compress|).
