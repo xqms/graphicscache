@@ -586,6 +586,28 @@
       }%
     \fi
   \fi
+%    \end{macrocode}
+% Finally, remove the temporary files (intermediate PDF, latex output files,
+% and |fullclip| helper files). Only the final cache file is kept.
+%    \begin{macrocode}
+  \ifwindows
+    \graphicscache@ShellEscape{del /q
+      "\graphicscache@raw@win"
+      "\graphicscache@cachedir@win\@backslashchar\graphicscache@rawname.aux"
+      "\graphicscache@cachedir@win\@backslashchar\graphicscache@rawname.log"
+      "\graphicscache@cachedir@win\@backslashchar\graphicscache@outputhash.pdf.dpi"
+      "\graphicscache@cachedir@win\@backslashchar\graphicscache@outputhash.pdf.crop.*"
+      2>NUL
+    }%
+  \else
+    \graphicscache@ShellEscape{rm -f
+      "\graphicscache@raw"
+      "\graphicscache@cachedir/\graphicscache@rawname.aux"
+      "\graphicscache@cachedir/\graphicscache@rawname.log"
+      "\graphicscache@cachedir/\graphicscache@outputhash.pdf.dpi"
+      "\graphicscache@cachedir/\graphicscache@outputhash.pdf.crop."*
+    }%
+  \fi
 }
 %    \end{macrocode}
 % \end{macro}
