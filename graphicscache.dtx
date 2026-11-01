@@ -423,7 +423,7 @@
         /GrayImageDict << /ColorTransform 1 /QFactor \graphicscache@qfactor\space /Blend 1 /HSamples [1 1 1 1] /VSamples [1 1 1 1] >>
         /GrayImageResolution \graphicscache@dpi\space
       >> setdistillerparams"
-      -f \graphicscache@output.raw.pdf
+      -f \graphicscache@raw
     }%
   \else
     \graphicscache@ShellEscape{#1
@@ -445,7 +445,7 @@
         /GrayImageDict << /ColorTransform 1 /QFactor \graphicscache@qfactor\space /Blend 1 /HSamples [1 1 1 1] /VSamples [1 1 1 1] >>
         /GrayImageResolution \graphicscache@dpi\space
       >> setdistillerparams'
-      -f \graphicscache@output.raw.pdf \string|\string| rm \graphicscache@output
+      -f \graphicscache@raw \string|\string| rm \graphicscache@output
     }%
   \fi
 }
@@ -488,8 +488,17 @@
 %    \begin{macrocode}
 \newcommand{\graphicscache@dorender}{%
   \PackageInfo{graphicscache}{Rendering \graphicscache@outputhash: \graphicscache@fname\space with args: \graphicscache@graphicsargs\space (master file)}%
+  \edef\graphicscache@rawname{\graphicscache@outputhash.pdf.raw}%
+  \edef\graphicscache@raw{\graphicscache@cachedir/\graphicscache@rawname.pdf}%
   \ifwindows
-    \graphicscache@ShellEscape{md "\graphicscache@cachedir" 2>NUL}%
+%    \end{macrocode}
+% |cmd.exe| interprets forward slashes as option switches, so we need native
+% paths for |md|, |del|, and |copy|.
+%    \begin{macrocode}
+    \StrSubstitute{\graphicscache@cachedir}{/}{\@backslashchar}[\graphicscache@cachedir@win]%
+    \edef\graphicscache@output@win{\graphicscache@cachedir@win\@backslashchar\graphicscache@outputhash.pdf}%
+    \edef\graphicscache@raw@win{\graphicscache@cachedir@win\@backslashchar\graphicscache@rawname.pdf}%
+    \graphicscache@ShellEscape{md "\graphicscache@cachedir@win" 2>NUL}%
   \else
     \graphicscache@ShellEscape{mkdir -p "\graphicscache@cachedir"}%
   \fi
@@ -532,28 +541,30 @@
 % First, render the graphics.
 %    \begin{macrocode}
   \ifwindows
-    \graphicscache@ShellEscape{del /q \graphicscache@output.raw.pdf}%
+    \graphicscache@ShellEscape{del /q "\graphicscache@raw@win" 2>NUL}%
     \graphicscache@ShellEscape{pdflatex
-      -jobname \graphicscache@output.raw
+      -jobname \graphicscache@rawname\space
       -interaction nonstopmode
+      -output-directory "\graphicscache@cachedir"
       "\string\documentclass{standalone}
       \string\usepackage{graphicx}
       \string\usepackage[export]{adjustbox}
       \string\begin{document}\string\includegraphics[\graphicscache@graphicsargs]{\graphicscache@fname}\string\end{document}"
     }%
-    \IfFileExists{\graphicscache@output.raw.pdf}{}{%
+    \IfFileExists{\graphicscache@raw}{}{%
       \PackageWarning{graphicscache}{External pdflatex call failed (see above)}%
       \def\graphicscache@output{}%
     }%
   \else
     \graphicscache@ShellEscape{pdflatex
-      -jobname \graphicscache@output.raw
+      -jobname \graphicscache@rawname\space
       -interaction nonstopmode
+      -output-directory "\graphicscache@cachedir"
       '\string\documentclass{standalone}
       \string\usepackage{graphicx}
       \string\usepackage[export]{adjustbox}
       \string\begin{document}\string\includegraphics[\graphicscache@graphicsargs]{\graphicscache@fname}\string\end{document}'
-      > /dev/null \string|\string| rm "\graphicscache@output.raw.pdf"
+      > /dev/null \string|\string| rm "\graphicscache@raw"
     }%
   \fi
 %    \end{macrocode}
@@ -567,11 +578,11 @@
     \PackageInfo{graphicscache}{Direct}%
     \ifwindows
       \graphicscache@ShellEscape{
-        copy \graphicscache@output.raw.pdf \graphicscache@output
+        copy "\graphicscache@raw@win" "\graphicscache@output@win"
       }%
     \else
       \graphicscache@ShellEscape{
-        cp \graphicscache@output.raw.pdf \graphicscache@output
+        cp \graphicscache@raw\space \graphicscache@output
       }%
     \fi
   \fi
