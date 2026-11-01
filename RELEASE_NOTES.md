@@ -48,6 +48,11 @@
 - `currfile` is only required when `listing` is enabled.
 - Removed spurious spaces and "Already have" info messages in the output.
 
+### Documentation
+
+- The default value of every key is shown next to its description.
+- Documented the `disable` and `hashshortnames` keys.
+
 ### release.sh
 
 - Runs LaTeX in a pinned TeX Live docker image (matching arXiv) if docker is

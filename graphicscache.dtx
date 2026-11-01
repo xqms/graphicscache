@@ -27,6 +27,29 @@
 \usepackage{ydoc-expl}
 % \usepackage{graphicscache}
 \usepackage[capitalize]{cleveref}
+% Show key defaults right-aligned next to the key description box.
+% Usage: \DescribeKey{key}'=...'!\KeyDefault{value}!
+\makeatletter
+\def\gc@keydefault{}
+\newcommand*\KeyDefault[1]{\gdef\gc@keydefault{#1}}
+\def\PrintKeys{%
+  \par\vspace\beforedescskip
+  \begingroup
+  \sbox\@tempboxa{\descframe{\usebox{\descbox}}}%
+  \Needspace*{\dimexpr\ht\@tempboxa+3\baselineskip\relax}%
+  \par\noindent
+  \hspace*{\descindent}%
+  \usebox\@tempboxa
+  \ifx\gc@keydefault\empty\else
+    \hfill\textit{default:}~\texttt{\gc@keydefault}%
+  \fi
+  \endgroup
+  \global\let\gc@keydefault\empty
+  \par
+  \vspace\afterdescskip
+  \par\noindent
+}
+\makeatother
 \EnableCrossrefs
 \CodelineIndex
 \RecordChanges
@@ -128,33 +151,31 @@
 %
 % \subsection{Package options}
 %
-% \DescribeKey{compress}'=false|flate|jpeg'
+% \DescribeKey{compress}'=false|flate|jpeg'!\KeyDefault{jpeg}!
 % Specifies the image compression algorithm. If |false|, the ghostscript call
 % is skipped, thus embedding the image at its original resolution and format.
 % If |flate|, the lossless |FlateEncode| algorithm is chosen (|flat| is
 % accepted as an alias). Finally, |jpeg|
 % indicates that JPEG encoding using |DCTEncode| is to be performed.
-% The default is |jpeg|.
 %
 % \textbf{Note:} In the |flate| case, the images are still downsampled to match
 % the DPI specified using the |dpi| key.
 %
-% \DescribeKey{dpi}'='<number>
-% Controls the image resolution in dots per inch. The default value is 300.
+% \DescribeKey{dpi}'='<number>!\KeyDefault{300}!
+% Controls the image resolution in dots per inch.
 % This option only takes effect if |compress| is not |false|.
 %
-% \DescribeKey{flatten}'=true|false'
+% \DescribeKey{flatten}'=true|false'!\KeyDefault{false}!
 % If enabled, transparency is flattened by ghostscript
 % (|-dHaveTransparency=false|). This is useful for print workflows or
 % journals that do not accept transparency. Only takes effect if |compress|
-% is not |false|. The default is |false|.
+% is not |false|.
 %
-% \DescribeKey{cmyk}'=true|false'
+% \DescribeKey{cmyk}'=true|false'!\KeyDefault{false}!
 % If enabled, ghostscript converts all colors and images to the CMYK color
 % space. Only takes effect if |compress| is not |false|.
-% The default is |false|.
 %
-% \DescribeKey{output icc profile}'='<file>
+% \DescribeKey{output icc profile}'='<file>!\KeyDefault{\textit{none}}!
 % Path to an ICC profile that ghostscript should use as output profile
 % (|-sOutputICCProfile|), e.g.\ to control the CMYK conversion performed by
 % |cmyk|. Only takes effect if |compress| is not |false|. By default, no
@@ -162,12 +183,12 @@
 % the path is part of the cache key: if you modify the profile file in place,
 % delete the cache folder to re-render.
 %
-% \DescribeKey{qfactor}'='<number>
+% \DescribeKey{qfactor}'='<number>!\KeyDefault{0.15}!
 % This controls the quality parameter of the JPEG encoder (see |compress|).
-% Smaller values give higher quality. The default value is 0.15, which
+% Smaller values give higher quality. The default value 0.15
 % corresponds to the ``Maximum'' setting mentioned by Adobe.
 %
-% \DescribeKey{listing}'=true|false'
+% \DescribeKey{listing}'=true|false'!\KeyDefault{false}!
 % If enabled, |graphicscache| will write an extra |name.graphicscache| file with
 % mappings from |includegraphics| arguments to cache files. This can be used
 % to produce a version of the TeX source code that directly references the
@@ -175,21 +196,37 @@
 % follows:\\
 % |file:line name [options] [resolved-options] resolved-name output-file|.
 %
-% \DescribeKey{render}'=true|false'
-% Controls whether rendering is allowed. The default is |true|. If |false|,
+% \DescribeKey{render}'=true|false'!\KeyDefault{true}!
+% Controls whether rendering is allowed. If |false|,
 % |graphicscache| is not allowed to create new cache files. Instead, it will
 % attempt to use the appropriate cache file. If it does not exist,
 % |graphicscache| will fall back to |graphicx| in-place rendering.
 % This can be used to perform a final release (see \cref{sec:release}).
 %
-% \DescribeKey{fullclip}'=true|false'
+% \DescribeKey{fullclip}'=true|false'!\KeyDefault{false}!
 % When |fullclip| is enabled, graphicscache will call ImageMagick's |convert|
 % to trim images, ensuring that only the specified rectangle takes up file
 % space in the resulting PDF.
 %
-% \DescribeKey{cachedir}'='<dir>
+% \DescribeKey{cachedir}'='<dir>!\KeyDefault{graphicscache}!
 % This key can be used to move the cache directory to another location.
-% The default value is |graphicscache|.
+%
+% \DescribeKey{hashshortnames}'=true|false'!\KeyDefault{false}!
+% If enabled, the cache key is computed from the file name as it is
+% written in the document instead of the resolved path of the image file.
+% This makes the cache independent of the location of the source images.
+% |release.sh| enables it automatically (see \cref{sec:release}).
+% Note that changing this option changes all cache keys.
+%
+% \DescribeKey{disable}'=true|false'!\KeyDefault{false}!
+% If enabled, |graphicscache| is bypassed and the original |graphicx|
+% implementation is used. This is mostly useful for individual images:
+%
+% \begin{example}
+%   |\includegraphics[width=...,disable=true]{...}|
+% \end{example}
+%
+% It is enabled automatically for internal calls of the |pdfpages| package.
 %
 % \subsection{Macros}
 %
