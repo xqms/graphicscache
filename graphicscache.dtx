@@ -401,11 +401,11 @@
   \ifdefempty{\graphicscache@outputicc}{%
     \def\graphicscache@outputiccarg{}%
   }{%
-    \edef\graphicscache@outputiccarg{-sOutputICCProfile=\graphicscache@outputicc}%
+    \edef\graphicscache@outputiccarg{-sOutputICCProfile="\graphicscache@outputicc"}%
   }%
   \ifwindows
     \graphicscache@ShellEscape{#1
-      -sOutputFile=\graphicscache@output\space
+      -sOutputFile="\graphicscache@output"
       -sDEVICE=pdfwrite
       -dCompatibilityLevel=1.4
       -dPDFSETTINGS=/prepress
@@ -423,11 +423,11 @@
         /GrayImageDict << /ColorTransform 1 /QFactor \graphicscache@qfactor\space /Blend 1 /HSamples [1 1 1 1] /VSamples [1 1 1 1] >>
         /GrayImageResolution \graphicscache@dpi\space
       >> setdistillerparams"
-      -f \graphicscache@raw
+      -f "\graphicscache@raw"
     }%
   \else
     \graphicscache@ShellEscape{#1
-      -sOutputFile=\graphicscache@output\space
+      -sOutputFile="\graphicscache@output"
       -sDEVICE=pdfwrite
       -dCompatibilityLevel=1.4
       -dPDFSETTINGS=/prepress
@@ -445,7 +445,7 @@
         /GrayImageDict << /ColorTransform 1 /QFactor \graphicscache@qfactor\space /Blend 1 /HSamples [1 1 1 1] /VSamples [1 1 1 1] >>
         /GrayImageResolution \graphicscache@dpi\space
       >> setdistillerparams'
-      -f \graphicscache@raw \string|\string| rm \graphicscache@output
+      -f "\graphicscache@raw" \string|\string| rm "\graphicscache@output"
     }%
   \fi
 }
@@ -513,7 +513,7 @@
         \PackageInfo{graphicscache}{Ext: |\filename@ext|}%
         \graphicscache@isbitmap{\filename@ext}{%
           \PackageInfo{graphicscache}{is bitmap!}%
-          \graphicscache@ShellEscape{identify -units PixelsPerInch -format '\@percentchar[fx:int(resolution.x)]' "\graphicscache@fname" > \graphicscache@output.dpi}%
+          \graphicscache@ShellEscape{identify -units PixelsPerInch -format '\@percentchar[fx:int(resolution.x)]' "\graphicscache@fname" > "\graphicscache@output.dpi"}%
           \CatchFileDef{\graphicscache@fdpi}{\graphicscache@output.dpi}{}%
           \PackageInfo{graphicscache}{Detected DPI: \graphicscache@fdpi (default 71)}%
           \ifnumequal{\graphicscache@fdpi}{0}{\edef\graphicscache@fdpi{71}}{}%
@@ -528,7 +528,7 @@
             \graphicscache@trim@r@pix +\graphicscache@trim@r bp,
             \graphicscache@trim@t@pix +\graphicscache@trim@t bp
           }%
-          \graphicscache@ShellEscape{convert "\graphicscache@fname" -gravity Northwest -chop \graphicscache@trim@l@pix x\graphicscache@trim@t@pix\space -gravity Southeast -chop \graphicscache@trim@r@pix x\graphicscache@trim@b@pix\space \graphicscache@output.crop.\filename@ext}%
+          \graphicscache@ShellEscape{convert "\graphicscache@fname" -gravity Northwest -chop \graphicscache@trim@l@pix x\graphicscache@trim@t@pix\space -gravity Southeast -chop \graphicscache@trim@r@pix x\graphicscache@trim@b@pix\space "\graphicscache@output.crop.\filename@ext"}%
           \edef\graphicscache@fname{\graphicscache@output.crop.\filename@ext}%
           \graphicscache@addarg{trim=\graphicscache@trim@l\space\graphicscache@trim@b\space\graphicscache@trim@r\space\graphicscache@trim@t}%
         }{%
@@ -582,7 +582,7 @@
       }%
     \else
       \graphicscache@ShellEscape{
-        cp \graphicscache@raw\space \graphicscache@output
+        cp "\graphicscache@raw" "\graphicscache@output"
       }%
     \fi
   \fi
