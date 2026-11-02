@@ -47,6 +47,13 @@
   hashes do not change.
 - `currfile` is only required when `listing` is enabled.
 - Removed spurious spaces and "Already have" info messages in the output.
+- Ghostscript is now detected by probing `rungs`, `gs` and `mgs` with
+  `--version` once per compilation, without printing shell errors for
+  missing executables. The "no ghostscript" warning is shown only once.
+- Without (unrestricted) shell escape, graphicscache no longer tries to run
+  external programs. Existing cache files are used, all other images are
+  included directly, and a single warning at the end of the compilation
+  explains why.
 
 ### Documentation
 
