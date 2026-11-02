@@ -131,6 +131,16 @@
 %
 % to enable caching.
 %
+% Without shell escape (or in the restricted shell escape mode, which is the
+% default in many \TeX{} distributions), |graphicscache| cannot create new
+% cache files. Existing cache files are still used, all other images are
+% included directly. A warning at the end of the compilation tells you how
+% many images could not be rendered.
+%
+% For compression, |graphicscache| needs ghostscript. It looks for an
+% executable called |rungs|, |gs|, or |mgs|. If none is found, a warning is
+% shown and the images are included without compression.
+%
 % |graphicscache| overrides the |\includegraphics| command so that you can use
 % it as usual. Internally, it calculates a hash from the |includegraphics|
 % arguments and the package options to generate a cache key.
@@ -502,6 +512,34 @@
   \RequirePackage{currfile}
 \fi
 %
+% Rendering requires unrestricted shell escape (|pdflatex| is not on the list
+% of programs allowed in restricted mode). Without it, we still use existing
+% cache files, but cannot create new ones. In that case, we warn once at the
+% end of the document.
+\newif\ifgraphicscache@shellescape\graphicscache@shellescapetrue
+\newcount\graphicscache@notrendered
+\def\graphicscache@shellescapestate{enabled}
+\ifdefined\pdf@shellescape
+  \ifcase\pdf@shellescape
+    \graphicscache@shellescapefalse
+    \def\graphicscache@shellescapestate{disabled}
+  \or
+  \else
+    \graphicscache@shellescapefalse
+    \def\graphicscache@shellescapestate{restricted}
+  \fi
+\fi
+\AtEndDocument{%
+  \ifnum\graphicscache@notrendered>0
+    \PackageWarningNoLine{graphicscache}{\the\graphicscache@notrendered\space
+      image(s) could not be rendered, since%
+      \MessageBreak shell escape is \graphicscache@shellescapestate. They were%
+      \MessageBreak included directly, without caching and%
+      \MessageBreak compression. Compile with -shell-escape%
+      \MessageBreak to enable graphicscache}%
+  \fi
+}
+%
 % shellesc has a bug on Ubuntu 16.04 (\ShellEscape is not immediate).
 % So we simply define our own shellescape macro.
 \ifx\lastsavedimageresourcepages\@undefined
@@ -591,7 +629,7 @@
         /GrayImageDict << /ColorTransform 1 /QFactor \graphicscache@qfactor\space /Blend 1 /HSamples [1 1 1 1] /VSamples [1 1 1 1] >>
         /GrayImageResolution \graphicscache@dpi\space
       >> setdistillerparams'
-      -f "\graphicscache@raw" \string|\string| rm "\graphicscache@output"
+      -f "\graphicscache@raw" \string|\string| rm -f "\graphicscache@output"
     }%
   \fi
 }
@@ -604,27 +642,67 @@
 %    \end{macrocode}
 %    If we previously established gs is not available, do nothing.
 %    \begin{macrocode}
+  \@ifundefined{graphicscache@gscommand}{%
+    \ifgraphicscache@gsnotavailable\else
+      \graphicscache@findgs
+    \fi
+  }{}%
+%    \end{macrocode}
+%    Without ghostscript, no cache file is created and the image is included
+%    directly (see |\graphicscache@work|).
+%    \begin{macrocode}
   \ifgraphicscache@gsnotavailable
   \else
-    \@ifundefined{graphicscache@gscommand}{%
-      \foreach \cmd in {rungs,gs,mgs} {%
-        \PackageInfo{graphicscache}{Trying \cmd\space to call ghostscript...^^J}%
-        \graphicscache@callgswithname{\cmd}%
-        \IfFileExists{\graphicscache@output}{%
-            \PackageInfo{graphicscache}{Found a working ghostscript called '\cmd'.}%
-            \global\edef\graphicscache@gscommand{\cmd}%
-            \breakforeach
-        }{}%
-      }%
-      \@ifundefined{graphicscache@gscommand}{%
-        \PackageWarning{graphicscache}{Could not find a working ghostscript executable. I will not compress any images.}{}%
-        \graphicscache@gsnotavailabletrue
-      }{}%
-    }{%
-      \PackageInfo{graphicscache}{Calling gs with name '\graphicscache@gscommand'^^J}%
-      \graphicscache@callgswithname{\graphicscache@gscommand}%
-    }%
+    \PackageInfo{graphicscache}{Calling gs with name '\graphicscache@gscommand'^^J}%
+    \graphicscache@callgswithname{\graphicscache@gscommand}%
   \fi
+}
+\newcommand{\graphicscache@rmgsprobe}{%
+  \ifwindows
+    \graphicscache@ShellEscape{del /q
+      "\graphicscache@cachedir@win\@backslashchar\graphicscache@outputhash.gsprobe"
+      2>NUL}%
+  \else
+    \graphicscache@ShellEscape{rm -f "\graphicscache@gsprobe"}%
+  \fi
+}
+%    \end{macrocode}
+% \end{macro}
+% \begin{macro}{\graphicscache@findgs}
+%    The ghostscript executable has different names depending on the platform
+%    and \TeX{} distribution. We probe the candidates by calling them with
+%    |--version| and discarding all output, so that users do not see confusing
+%    error messages for missing executables. The probe command always succeeds,
+%    a marker file indicates whether the candidate works. The result is stored
+%    globally, so that probing happens only once per compilation.
+%    \begin{macrocode}
+\newcommand{\graphicscache@findgs}{%
+  \edef\graphicscache@gsprobe{\graphicscache@cachedir/\graphicscache@outputhash.gsprobe}%
+  \graphicscache@rmgsprobe
+  \foreach \cmd in {rungs,gs,mgs} {%
+    \PackageInfo{graphicscache}{Probing for ghostscript as '\cmd'}%
+    \ifwindows
+      \graphicscache@ShellEscape{\cmd\space --version >NUL 2>NUL
+        \string&\string& echo ok>"\graphicscache@gsprobe"
+        \string|\string| ver >NUL}%
+    \else
+      \graphicscache@ShellEscape{\cmd\space --version >/dev/null 2>&1
+        \string&\string& echo ok >"\graphicscache@gsprobe"
+        \string|\string| true}%
+    \fi
+    \IfFileExists{\graphicscache@gsprobe}{%
+      \PackageInfo{graphicscache}{Found a working ghostscript called '\cmd'.}%
+      \global\edef\graphicscache@gscommand{\cmd}%
+      \breakforeach
+    }{}%
+  }%
+  \graphicscache@rmgsprobe
+  \@ifundefined{graphicscache@gscommand}{%
+    \PackageWarningNoLine{graphicscache}{Could not find a working ghostscript%
+      \MessageBreak executable (tried rungs, gs, mgs).%
+      \MessageBreak Images will not be compressed}%
+    \global\graphicscache@gsnotavailabletrue
+  }{}%
 }
 %    \end{macrocode}
 % \end{macro}
@@ -783,10 +861,19 @@
 %    \begin{macrocode}
     \ifgraphicscache@dorender
 %    \end{macrocode}
-% Check if output file exists and is newer than input
+% Check if output file exists and is newer than input. If we cannot render
+% because shell escape is not available, count the image for the summary
+% warning at the end of the document. The image is then included directly
+% below.
 %    \begin{macrocode}
     \filemodcmp{\graphicscache@fname}{\graphicscache@output}{% input is newer
-      \graphicscache@dorender%
+      \ifgraphicscache@shellescape
+        \graphicscache@dorender%
+      \else
+        \PackageInfo{graphicscache}{Cannot render \graphicscache@fname\space
+          (shell escape is \graphicscache@shellescapestate)}%
+        \global\advance\graphicscache@notrendered by 1\relax
+      \fi
     }{% Output is newer
 %       \PackageInfo{graphicscache}{Already have \graphicscache@outputhash: \graphicscache@fname}%
     }%
